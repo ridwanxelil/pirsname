@@ -3,198 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Soru Bankası - Firebase Canlı</title>
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-        // --- 1. BURAYI FİREBASE'DEN ALDIĞIN BİLGİLERLE DEĞİŞTİR ---
-        const firebaseConfig = {
-            apiKey: "AIzaSy...",
-            authDomain: "projeniz.firebaseapp.com",
-            projectId: "projeniz",
-            storageBucket: "projeniz.appspot.com",
-            messagingSenderId: "12345",
-            appId: "1:12345:web:abcd"
-        };
-
-        // Firebase'i Başlat
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        // Global Değişkenler
-        window.questions = [];
-        window.categories = [];
-
-        // --- 2. VERİLERİ CANLI DİNLE (Firestore -> Uygulama) ---
-        onSnapshot(collection(db, "questions"), (snapshot) => {
-            window.questions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            renderManageData();
-        });
-
-        onSnapshot(collection(db, "categories"), (snapshot) => {
-            window.categories = snapshot.docs.map(doc => doc.data().name);
-            renderManageData();
-            updateQuizCategoryList();
-        });
-
-        // --- 3. VERİ EKLEME FONKSİYONLARI ---
-        window.addCategoryToDB = async (name) => {
-            await addDoc(collection(db, "categories"), { name: name });
-        };
-
-        window.addQuestionToDB = async (qData) => {
-            await addDoc(collection(db, "questions"), qData);
-        };
-
-        window.deleteQuestionFromDB = async (id) => {
-            await deleteDoc(doc(db, "questions", id));
-        };
-    </script>
-
-    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+    <title>Kapsül Soru Platformu</title>
     <style>
-        /* Tasarım kodların (Öncekiyle aynı şık tasarım) */
-        :root { --main-color: #8e2424; --bg-color: #f0f0f0; }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-color); display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding-bottom: 100px; }
-        #main-container { width: 95%; max-width: 800px; margin-top: 30px; }
-        .box { background: white; padding: 30px 20px; border: 2px solid var(--main-color); border-radius: 40px; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; }
-        input, select { width: 85%; padding: 12px; margin: 8px 0; border-radius: 20px; border: 1px solid #ccc; font-size: 1rem; }
-        .nav-item { padding: 12px 25px; margin: 5px; border-radius: 50px; cursor: pointer; border: 1px solid var(--main-color); color: var(--main-color); font-weight: bold; display: inline-block; background: white; transition: 0.3s; }
-        .nav-item.active { background: var(--main-color); color: white; }
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: white; display: flex; justify-content: center; border-top: 2px solid var(--main-color); padding: 15px 0; z-index: 100; }
-        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
-        .option-btn { background: white; border: 2px solid var(--main-color); border-radius: 50px; padding: 10px; display: flex; align-items: center; cursor: pointer; }
-        .letter-circle { width: 30px; height: 30px; border: 1px solid #333; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-weight: bold; margin-right: 10px; }
-        .correct { background-color: #4CAF50 !important; color: white; }
-        .wrong { background-color: #e57373 !important; color: white; }
-        .hidden { display: none; }
-        .list-item { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #eee; }
+        :root {
+            --bg-color: #f4f4f9;
+            --primary-red: #8b0000;
+            --white: #ffffff;
+            --success: #28a745;
+            --error: #dc3545;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #e29000 0%, #8b4513 100%); /* Görseldeki gibi sıcak tonlar */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .quiz-container {
+            width: 90%;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
+        }
+
+        /* Ana Soru Kapsülü */
+        .question-box {
+            background: var(--white);
+            padding: 40px;
+            border-radius: 50px; /* Tam kapsül formu */
+            border: 4px solid var(--primary-red);
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 40px;
+            color: #333;
+        }
+
+        /* Seçenek Kapsülleri */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .option {
+            background: var(--white);
+            padding: 15px 25px;
+            border-radius: 40px;
+            border: 2px solid var(--primary-red);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+        }
+
+        .option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .option-letter {
+            background: var(--primary-red);
+            color: white;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            font-weight: bold;
+        }
+
+        /* Doğru-Yanlış Renkleri */
+        .correct { background-color: var(--success) !important; color: white !important; }
+        .wrong { background-color: var(--error) !important; color: white !important; }
+
+        /* Yönetim Paneli */
+        .admin-panel {
+            margin-top: 30px;
+            background: rgba(255,255,255,0.9);
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        input[type="file"] { margin-bottom: 10px; }
+        button { padding: 10px 20px; cursor: pointer; border-radius: 5px; border: none; background: var(--primary-red); color: white; }
     </style>
 </head>
 <body>
 
-<div id="main-container">
-    <div id="welcome-section" class="box">
-        <h1>Soru Sor - Bulut Veritabanı Canlı!</h1>
-        <p>Verileriniz artık dünyanın her yerinden erişilebilir.</p>
-        <button class="nav-item active" onclick="showSection('category-select')">Başla</button>
-    </div>
-
-    <div id="category-section" class="box hidden">
-        <h2>Kategori Seçin</h2>
-        <div id="quiz-category-list"></div>
-    </div>
-
-    <div id="solve-section" class="hidden">
-        <div class="box">
-            <h3 id="current-cat-label" style="color: var(--main-color);"></h3>
-            <h2 id="question-text"></h2>
+<div class="quiz-container">
+    <div id="quiz-area">
+        <div class="question-box" id="questionText">Soru yüklemek için lütfen Excel (CSV) seçin veya manuel ekleyin.</div>
+        
+        <div class="options-grid">
+            <div class="option" onclick="checkAnswer('A')"><span class="option-letter">A</span> <span id="optA">-</span></div>
+            <div class="option" onclick="checkAnswer('B')"><span class="option-letter">B</span> <span id="optB">-</span></div>
+            <div class="option" onclick="checkAnswer('C')"><span class="option-letter">C</span> <span id="optC">-</span></div>
+            <div class="option" onclick="checkAnswer('D')"><span class="option-letter">D</span> <span id="optD">-</span></div>
         </div>
-        <div class="options-grid" id="options-container"></div>
-        <button id="next-btn" class="hidden nav-item active" onclick="nextQuestion()">Sonraki Soru</button>
     </div>
 
-    <div id="result-section" class="box hidden">
-        <h2>Test Sonucu</h2>
-        <p id="result-detail"></p>
-        <button class="nav-item active" onclick="showSection('category-select')">Tekrar Çöz</button>
+    <div class="admin-panel">
+        <h3>Soru Yönetimi</h3>
+        <p>CSV Formatı: <i>Soru, A, B, C, D, DoğruCevap(A-D)</i></p>
+        <input type="file" id="csvFile" accept=".csv">
+        <button onclick="loadCSV()">CSV Yükle</button>
     </div>
-
-    <div id="manage-section" class="hidden">
-        <div class="box">
-            <h3>Bulut Kategori Yönetimi</h3>
-            <input type="text" id="cat-input" placeholder="Yeni kategori adı">
-            <button class="nav-item active" onclick="handleCatAdd()">Ekle</button>
-        </div>
-        <div class="box">
-            <h3>Soru Ekle</h3>
-            <select id="q-cat-select"></select>
-            <input type="text" id="q-text" placeholder="Soru cümlesi">
-            <input type="text" id="opt0" placeholder="A"><input type="text" id="opt1" placeholder="B">
-            <input type="text" id="opt2" placeholder="C"><input type="text" id="opt3" placeholder="D">
-            <select id="q-correct"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select>
-            <button class="nav-item active" onclick="handleQuestionSave()">Kaydet</button>
-        </div>
-        <div class="box"><h3>Buluttaki Sorular</h3><div id="manage-q-list"></div></div>
-    </div>
-</div>
-
-<div class="bottom-nav">
-    <div class="nav-item active" id="btn-solve-nav" onclick="showSection('welcome')">Soru Sor</div>
-    <div class="nav-item" id="btn-manage-nav" onclick="showSection('manage')">Yönetim</div>
 </div>
 
 <script>
-    // ARAYÜZ MANTIĞI
-    let activeQuiz = [];
+    let questions = [];
     let currentIdx = 0;
-    let score = 0;
 
-    function showSection(s) {
-        document.querySelectorAll('#main-container > div').forEach(d => d.classList.add('hidden'));
-        document.getElementById(s + '-section').classList.remove('hidden');
-    }
+    function loadCSV() {
+        const fileInput = document.getElementById('csvFile');
+        const file = fileInput.files[0];
+        const reader = new FileReader();
 
-    async function handleCatAdd() {
-        const val = document.getElementById('cat-input').value;
-        if(val) { await window.addCategoryToDB(val); document.getElementById('cat-input').value = ""; }
-    }
-
-    async function handleQuestionSave() {
-        const data = {
-            cat: document.getElementById('q-cat-select').value,
-            q: document.getElementById('q-text').value,
-            options: [document.getElementById('opt0').value, document.getElementById('opt1').value, document.getElementById('opt2').value, document.getElementById('opt3').value],
-            answer: parseInt(document.getElementById('q-correct').value)
+        reader.onload = function(e) {
+            const text = e.target.result;
+            const rows = text.split('\n');
+            questions = rows.map(row => {
+                const cols = row.split(',');
+                return {
+                    q: cols[0], a: cols[1], b: cols[2], c: cols[3], d: cols[4], correct: cols[5]?.trim()
+                };
+            }).filter(item => item.q);
+            
+            showQuestion(0);
         };
-        await window.addQuestionToDB(data);
-        alert("Buluta kaydedildi!");
+        reader.readAsText(file);
     }
 
-    function renderManageData() {
-        const qList = document.getElementById('manage-q-list');
-        const qSelect = document.getElementById('q-cat-select');
-        if(qList) qList.innerHTML = window.questions.map((q, i) => `<div class="list-item"><span>${q.q}</span><button onclick="window.deleteQuestionFromDB('${q.id}')">Sil</button></div>`).join('');
-        if(qSelect) qSelect.innerHTML = window.categories.map(c => `<option value="${c}">${c}</option>`).join('');
+    function showQuestion(idx) {
+        if(questions.length === 0) return;
+        const q = questions[idx];
+        document.getElementById('questionText').innerText = q.q;
+        document.getElementById('optA').innerText = q.a;
+        document.getElementById('optB').innerText = q.b;
+        document.getElementById('optC').innerText = q.c;
+        document.getElementById('optD').innerText = q.d;
+        
+        // Reset renkler
+        document.querySelectorAll('.option').forEach(el => el.className = 'option');
     }
 
-    function updateQuizCategoryList() {
-        const list = document.getElementById('quiz-category-list');
-        if(list) list.innerHTML = window.categories.map(c => `<button class="nav-item" style="display:block; width:100%" onclick="startQuiz('${c}')">${c}</button>`).join('');
-    }
-
-    function startQuiz(cat) {
-        activeQuiz = window.questions.filter(q => q.cat === cat);
-        currentIdx = 0; score = 0;
-        showSection('solve');
-        loadQuestion();
-    }
-
-    function loadQuestion() {
-        const q = activeQuiz[currentIdx];
-        document.getElementById('question-text').innerText = q.q;
-        const cont = document.getElementById('options-container');
-        cont.innerHTML = q.options.map((o, i) => `<button class="option-btn" onclick="checkAnswer(${i}, this)"><span class="letter-circle">${String.fromCharCode(65+i)}</span>${o}</button>`).join('');
-        document.getElementById('next-btn').classList.add('hidden');
-    }
-
-    function checkAnswer(sel, btn) {
-        const corr = activeQuiz[currentIdx].answer;
-        if(sel === corr) { btn.classList.add('correct'); score++; }
-        else { btn.classList.add('wrong'); document.querySelectorAll('.option-btn')[corr].classList.add('correct'); }
-        document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
-        document.getElementById('next-btn').classList.remove('hidden');
-    }
-
-    function nextQuestion() {
-        currentIdx++;
-        if(currentIdx < activeQuiz.length) loadQuestion();
-        else {
-            document.getElementById('result-detail').innerText = `Başarı: %${Math.round((score/activeQuiz.length)*100)}`;
-            showSection('result');
+    function checkAnswer(choice) {
+        const correct = questions[currentIdx].correct;
+        const options = document.querySelectorAll('.option');
+        
+        if(choice === correct) {
+            alert("Tebrikler! Doğru cevap.");
+            currentIdx++;
+            if(currentIdx < questions.length) showQuestion(currentIdx);
+        } else {
+            alert("Maalesef yanlış cevap.");
         }
     }
 </script>
+
 </body>
 </html>
