@@ -3,175 +3,227 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kapsül Soru Platformu</title>
+    <title>Sınav Uygulaması Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
-            --bg-color: #f4f4f9;
-            --primary-red: #8b0000;
-            --white: #ffffff;
-            --success: #28a745;
-            --error: #dc3545;
+            --primary: #007AFF;
+            --bg: #f5f5f7;
+            --text: #1d1d1f;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #e29000 0%, #8b4513 100%); /* Görseldeki gibi sıcak tonlar */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
+            padding: 20px;
+            padding-bottom: 80px; /* Menü için boşluk */
+            background-color: var(--bg);
+            color: var(--text);
         }
 
-        .quiz-container {
-            width: 90%;
-            max-width: 800px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 30px;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.2);
-        }
+        .section { display: none; animation: fadeIn 0.3s; }
+        .section.active { display: block; }
 
-        /* Ana Soru Kapsülü */
-        .question-box {
-            background: var(--white);
-            padding: 40px;
-            border-radius: 50px; /* Tam kapsül formu */
-            border: 4px solid var(--primary-red);
-            font-size: 1.5rem;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 40px;
-            color: #333;
-        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-        /* Seçenek Kapsülleri */
-        .options-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
+        h1 { text-align: center; }
 
-        .option {
-            background: var(--white);
-            padding: 15px 25px;
-            border-radius: 40px;
-            border: 2px solid var(--primary-red);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            transition: all 0.3s ease;
-            font-size: 1.1rem;
-        }
-
-        .option:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .option-letter {
-            background: var(--primary-red);
-            color: white;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-right: 15px;
-            font-weight: bold;
-        }
-
-        /* Doğru-Yanlış Renkleri */
-        .correct { background-color: var(--success) !important; color: white !important; }
-        .wrong { background-color: var(--error) !important; color: white !important; }
-
-        /* Yönetim Paneli */
-        .admin-panel {
-            margin-top: 30px;
-            background: rgba(255,255,255,0.9);
+        /* Kart Yapıları */
+        .card {
+            background: white;
             padding: 20px;
             border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
         }
 
-        input[type="file"] { margin-bottom: 10px; }
-        button { padding: 10px 20px; cursor: pointer; border-radius: 5px; border: none; background: var(--primary-red); color: white; }
+        /* Form Elemanları */
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            box-sizing: border-box;
+        }
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button.secondary { background: #34c759; }
+        button.outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+
+        /* Alt Menü */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 65px;
+            background: white;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid #ddd;
+            z-index: 1000;
+        }
+
+        .nav-item {
+            text-decoration: none;
+            color: #888;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .nav-item.active { color: var(--primary); }
+
+        .nav-item span { font-size: 22px; }
+
+        /* Sınav Modalı */
+        #modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
-<div class="quiz-container">
-    <div id="quiz-area">
-        <div class="question-box" id="questionText">Soru yüklemek için lütfen Excel (CSV) seçin veya manuel ekleyin.</div>
+    <div id="home" class="section active">
+        <h1>Sınav Uygulaması</h1>
+        <div class="card">
+            <p>Hoş geldiniz! Sınava başlamak için aşağıdaki butona basın.</p>
+            <button onclick="showModal()">Sınava Başla</button>
+        </div>
+        <div id="quest-count" style="text-align: center; color: #666;"></div>
+    </div>
+
+    <div id="settings" class="section">
+        <h1>Ayarlar</h1>
         
-        <div class="options-grid">
-            <div class="option" onclick="checkAnswer('A')"><span class="option-letter">A</span> <span id="optA">-</span></div>
-            <div class="option" onclick="checkAnswer('B')"><span class="option-letter">B</span> <span id="optB">-</span></div>
-            <div class="option" onclick="checkAnswer('C')"><span class="option-letter">C</span> <span id="optC">-</span></div>
-            <div class="option" onclick="checkAnswer('D')"><span class="option-letter">D</span> <span id="optD">-</span></div>
+        <div class="card">
+            <h3>Yeni Soru Ekle</h3>
+            <input type="text" id="q-text" placeholder="Soru metni">
+            <input type="text" id="q-correct" placeholder="Doğru Cevap">
+            <button onclick="addQuestion()">Kaydet</button>
+        </div>
+
+        <div class="card">
+            <h3>Excel İşlemleri</h3>
+            <button class="outline" onclick="exportToExcel()">Excel Olarak İndir (Export)</button>
+            <p style="font-size: 12px; margin-top: 10px;">Excel'den Soru Yükle:</p>
+            <input type="file" id="excel-input" accept=".xlsx, .xls" onchange="importExcel(event)">
         </div>
     </div>
 
-    <div class="admin-panel">
-        <h3>Soru Yönetimi</h3>
-        <p>CSV Formatı: <i>Soru, A, B, C, D, DoğruCevap(A-D)</i></p>
-        <input type="file" id="csvFile" accept=".csv">
-        <button onclick="loadCSV()">CSV Yükle</button>
+    <div id="modal">
+        <div class="modal-content">
+            <h3>Soru Kaynağı Seçin</h3>
+            <p>Hangi havuzdan soru çözmek istersiniz?</p>
+            <button onclick="startQuiz('local')">Kendi Sorularım</button>
+            <button class="secondary" onclick="startQuiz('api')">İnternetten (Rastgele)</button>
+            <button class="outline" onclick="closeModal()" style="margin-top: 10px;">İptal</button>
+        </div>
     </div>
-</div>
 
-<script>
-    let questions = [];
-    let currentIdx = 0;
+    <nav class="bottom-nav">
+        <a href="javascript:void(0)" class="nav-item active" id="nav-home" onclick="nav('home')">
+            <span>🏠</span> Ana Sayfa
+        </a>
+        <a href="javascript:void(0)" class="nav-item" id="nav-settings" onclick="nav('settings')">
+            <span>⚙️</span> Ayarlar
+        </a>
+    </nav>
 
-    function loadCSV() {
-        const fileInput = document.getElementById('csvFile');
-        const file = fileInput.files[0];
-        const reader = new FileReader();
+    <script>
+        let questions = JSON.parse(localStorage.getItem('myQuestions')) || [];
 
-        reader.onload = function(e) {
-            const text = e.target.result;
-            const rows = text.split('\n');
-            questions = rows.map(row => {
-                const cols = row.split(',');
-                return {
-                    q: cols[0], a: cols[1], b: cols[2], c: cols[3], d: cols[4], correct: cols[5]?.trim()
-                };
-            }).filter(item => item.q);
+        // Sayfa Değiştirme
+        function nav(pageId) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             
-            showQuestion(0);
-        };
-        reader.readAsText(file);
-    }
-
-    function showQuestion(idx) {
-        if(questions.length === 0) return;
-        const q = questions[idx];
-        document.getElementById('questionText').innerText = q.q;
-        document.getElementById('optA').innerText = q.a;
-        document.getElementById('optB').innerText = q.b;
-        document.getElementById('optC').innerText = q.c;
-        document.getElementById('optD').innerText = q.d;
-        
-        // Reset renkler
-        document.querySelectorAll('.option').forEach(el => el.className = 'option');
-    }
-
-    function checkAnswer(choice) {
-        const correct = questions[currentIdx].correct;
-        const options = document.querySelectorAll('.option');
-        
-        if(choice === correct) {
-            alert("Tebrikler! Doğru cevap.");
-            currentIdx++;
-            if(currentIdx < questions.length) showQuestion(currentIdx);
-        } else {
-            alert("Maalesef yanlış cevap.");
+            document.getElementById(pageId).classList.add('active');
+            document.getElementById('nav-' + pageId).classList.add('active');
+            updateCount();
         }
-    }
-</script>
 
+        // Soru Ekleme
+        function addQuestion() {
+            const q = document.getElementById('q-text').value;
+            const a = document.getElementById('q-correct').value;
+            if(!q || !a) return alert("Boş bırakmayın!");
+            
+            questions.push({ soru: q, cevap: a });
+            localStorage.setItem('myQuestions', JSON.stringify(questions));
+            alert("Soru eklendi!");
+            document.getElementById('q-text').value = "";
+            document.getElementById('q-correct').value = "";
+        }
+
+        // Excel Export
+        function exportToExcel() {
+            const ws = XLSX.utils.json_to_sheet(questions);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Sorular");
+            XLSX.writeFile(wb, "soru_listesi.xlsx");
+        }
+
+        // Excel Import
+        function importExcel(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                const json = XLSX.utils.sheet_to_json(sheet);
+                
+                questions = [...questions, ...json];
+                localStorage.setItem('myQuestions', JSON.stringify(questions));
+                alert(json.length + " soru başarıyla yüklendi!");
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        // Sınav Başlatma Mantığı
+        function showModal() { document.getElementById('modal').style.display = 'flex'; }
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+
+        function startQuiz(type) {
+            closeModal();
+            if(type === 'local') {
+                if(questions.length === 0) return alert("Henüz soru eklememişsiniz! Ayarlar'a gidin.");
+                alert("Kendi sorularınızdan sınav başlıyor... (Soru Sayısı: " + questions.length + ")");
+            } else {
+                alert("İnternetten rastgele sorular çekiliyor...");
+                // Burada fetch('https://opentdb.com/api.php?amount=10') gibi bir API çağrısı yapılabilir.
+            }
+        }
+
+        function updateCount() {
+            document.getElementById('quest-count').innerText = "Havuzunuzda " + questions.length + " soru var.";
+        }
+        updateCount();
+    </script>
 </body>
 </html>
