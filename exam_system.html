@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sınav Sistemi - Soru Bankası</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        #root {
+            min-height: 100vh;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        // Soru Veri Tabanı
+        let questionsDatabase = [
+            {
+                id: 1,
+                text: "Türkiye'nin başkenti neresidir?",
+                category: "Coğrafya",
+                subcategory: "Türkiye",
+                difficulty: "Kolay",
+                options: ["İstanbul", "Ankara", "İzmir", "Bursa"],
+                correctAnswer: 1,
+                explanation: "Ankara, 1923'ten beri Türkiye'nin başkenti."
+            },
+            {
+                id: 2,
+                text: "Anadolu'nun en yüksek dağı hangisidir?",
+                category: "Coğrafya",
+                subcategory: "Türkiye",
+                difficulty: "Orta",
+                options: ["Kaçkar Dağı", "Erciyes Dağı", "Aladag", "Suphan Dağı"],
+                correctAnswer: 2,
+                explanation: "Erciyes Dağı 3917 metredir."
+            },
+            {
+                id: 3,
+                text: "Dünya'nın en yüksek dağı hangisidir?",
+                category: "Coğrafya",
+                subcategory: "Dünya",
+                difficulty: "Kolay",
+                options: ["K2", "Everest", "Kilimanjaro", "Denali"],
+                correctAnswer: 1,
+                explanation: "Mount Everest 8.848 metre yüksekliğe sahiptir."
+            },
+            {
+                id: 4,
+                text: "2+2 kaçtır?",
+                category: "Matematik",
+                subcategory: "Temel İşlemler",
+                difficulty: "Kolay",
+                options: ["3", "4", "5", "6"],
+                correctAnswer: 1,
+                explanation: "2+2=4"
+            },
+            {
+                id: 5,
+                text: "15 × 12 kaçtır?",
+                category: "Matematik",
+                subcategory: "Temel İşlemler",
+                difficulty: "Orta",
+                options: ["150", "160", "180", "200"],
+                correctAnswer: 2,
+                explanation: "15 × 12 = 180"
+            },
+            {
+                id: 6,
+                text: "Pisagor Teoremi nedir?",
+                category: "Matematik",
+                subcategory: "Geometri",
+                difficulty: "Zor",
+                options: ["a+b=c", "a²+b²=c²", "a³+b³=c³", "a/b=c"],
+                correctAnswer: 1,
+                explanation: "Dik üçgende hipotenüsün karesi, diğer iki kenarın kareleri toplamına eşittir."
+            },
+            {
+                id: 7,
+                text: "Bir dairenin alanı nasıl hesaplanır?",
+                category: "Matematik",
+                subcategory: "Geometri",
+                difficulty: "Orta",
+                options: ["πr", "2πr", "πr²", "πd²"],
+                correctAnswer: 2,
+                explanation: "Daire alanı = πr² (π × yarıçap²)"
+            },
+            {
+                id: 8,
+                text: "Mitokondri neyin organeli?",
+                category: "Biyoloji",
+                subcategory: "Hücre",
+                difficulty: "Orta",
+                options: ["Çekirdek", "Hücre", "Kalp", "Beyin"],
+                correctAnswer: 1,
+                explanation: "Mitokondri hücrenin enerji fabrikasıdır."
+            },
+            {
+                id: 9,
+                text: "Fotosentez nedir?",
+                category: "Biyoloji",
+                subcategory: "Bitki Fizyolojisi",
+                difficulty: "Orta",
+                options: ["Işık yayan bir olay", "Bitkinin ışığı enerjiye dönüştürdüğü olay", "Su üreten olay", "Mitokondride gerçekleşen olay"],
+                correctAnswer: 1,
+                explanation: "Fotosentez, bitkiler tarafından ışık enerjisinin kimyasal enerjiye dönüştürüldüğü biyolojik olaydır."
+            },
+            {
+                id: 10,
+                text: "İnsan vücudunda kaç kemik bulunur?",
+                category: "Biyoloji",
+                subcategory: "İnsan Anatomisi",
+                difficulty: "Kolay",
+                options: ["150", "206", "250", "300"],
+                correctAnswer: 1,
+                explanation: "Erişkin insan vücudunda 206 kemik bulunur."
+            },
+            {
+                id: 11,
+                text: "DNA'nın tam adı nedir?",
+                category: "Biyoloji",
+                subcategory: "Genetik",
+                difficulty: "Kolay",
+                options: ["Deoxyribose Nucleic Acid", "Deoxyribonucleic Acid", "Deoxynucleic Acid", "Diribonucleic Acid"],
+                correctAnswer: 1,
+                explanation: "DNA'nın tam adı Deoxyribonucleic Acid (Deoksiribonükleik Asit) dir."
+            },
+            {
+                id: 12,
+                text: "İçerik Yönetim Sistemi'nin İngilizce kısaltması nedir?",
+                category: "Bilgisayar",
+                subcategory: "Web Teknolojileri",
+                difficulty: "Kolay",
+                options: ["CMS", "IYS", "WMS", "DMS"],
+                correctAnswer: 0,
+                explanation: "Content Management System (CMS), web sitesi yönetimi için kullanılan yazılım sistemidir."
+            },
+            {
+                id: 13,
+                text: "HTML'in anlamı nedir?",
+                category: "Bilgisayar",
+                subcategory: "Web Teknolojileri",
+                difficulty: "Kolay",
+                options: ["Hyper Tool Markup Language", "High Text Mark Language", "HyperText Markup Language", "Hyper Timed Markup Language"],
+                correctAnswer: 2,
+                explanation: "HTML (HyperText Markup Language), web sayfaları oluşturmak için kullanılan işaretleme dilidir."
+            },
+            {
+                id: 14,
+                text: "Python programlama dili kaç yılında oluşturulmuştur?",
+                category: "Bilgisayar",
+                subcategory: "Programlama",
+                difficulty: "Orta",
+                options: ["1989", "1991", "1993", "1995"],
+                correctAnswer: 1,
+                explanation: "Python, Guido van Rossum tarafından 1989 yılında tasarlanmış, 1991'de ilk versiyonu yayınlanmıştır."
+            }
+        ];
+
+        function ExamSystem() {
+            const [currentPage, setCurrentPage] = React.useState('menu');
+            const [selectedCategory, setSelectedCategory] = React.useState(null);
+            const [selectedSubcategory, setSelectedSubcategory] = React.useState(null);
+            const [selectedDifficulty, setSelectedDifficulty] = React.useState(null);
+            const [questionCount, setQuestionCount] = React.useState(null);
+            const [examQuestions, setExamQuestions] = React.useState([]);
+            const [currentQuestion, setCurrentQuestion] = React.useState(0);
+            const [userAnswers, setUserAnswers] = React.useState({});
+            const [examFinished, setExamFinished] = React.useState(false);
+
+            const getCategories = () => {
+                const categories = [...new Set(questionsDatabase.map(q => q.category))];
+                return categories;
+            };
+
+            const getSubcategories = (category) => {
+                const subcategories = [...new Set(
+                    questionsDatabase
+                        .filter(q => q.category === category)
+                        .map(q => q.subcategory)
+                )];
+                return subcategories;
+            };
+
+            const getDifficulties = () => {
+                const difficulties = [...new Set(questionsDatabase.map(q => q.difficulty))];
+                return difficulties;
+            };
+
+            const startExam = () => {
+                let filtered = questionsDatabase;
+
+                if (selectedCategory) {
+                    filtered = filtered.filter(q => q.category === selectedCategory);
+                }
+                if (selectedSubcategory) {
+                    filtered = filtered.filter(q => q.subcategory === selectedSubcategory);
+                }
+                if (selectedDifficulty) {
+                    filtered = filtered.filter(q => q.difficulty === selectedDifficulty);
+                }
+
+                let selectedQuestions = filtered;
+                if (questionCount !== null && questionCount !== 'unlimited') {
+                    selectedQuestions = filtered.slice(0, questionCount);
+                }
+
+                if (selectedQuestions.length === 0) {
+                    alert('Seçim kriterlerine uygun soru bulunamadı!');
+                    return;
+                }
+
+                setExamQuestions(selectedQuestions);
+                setUserAnswers({});
+                setCurrentQuestion(0);
+                setExamFinished(false);
+                setCurrentPage('exam');
+            };
+
+            const handleAnswer = (optionIndex) => {
+                setUserAnswers({
+                    ...userAnswers,
+                    [currentQuestion]: optionIndex
+                });
+            };
+
+            const goNextQuestion = () => {
+                if (currentQuestion < examQuestions.length - 1) {
+                    setCurrentQuestion(currentQuestion + 1);
+                } else {
+                    finishExam();
+                }
+            };
+
+            const goPrevQuestion = () => {
+                if (currentQuestion > 0) {
+                    setCurrentQuestion(currentQuestion - 1);
+                }
+            };
+
+            const finishExam = () => {
+                setExamFinished(true);
+                setCurrentPage('results');
+            };
+
+            const calculateResults = () => {
+                let correct = 0;
+                let wrong = [];
+
+                examQuestions.forEach((q, idx) => {
+                    const userAnswer = userAnswers[idx];
+                    if (userAnswer === q.correctAnswer) {
+                        correct++;
+                    } else {
+                        wrong.push({
+                            question: q,
+                            userAnswer: userAnswer !== undefined ? q.options[userAnswer] : 'Cevap verilmedi',
+                            correctAnswer: q.options[q.correctAnswer]
+                        });
+                    }
+                });
+
+                return { correct, wrong, total: examQuestions.length };
+            };
+
+            const handleExcelImport = async (file) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const workbook = XLSX.read(e.target.result, { type: 'binary' });
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const data = XLSX.utils.sheet_to_json(worksheet);
+
+                    let newQuestions = [];
+                    data.forEach((row, idx) => {
+                        const newQuestion = {
+                            id: questionsDatabase.length + newQuestions.length + 1,
+                            text: row['Soru Metni'] || '',
+                            category: row['Kategori'] || 'Diğer',
+                            subcategory: row['Alt Kategori'] || 'Genel',
+                            difficulty: row['Zorluk'] || 'Orta',
+                            options: [
+                                row['Seçenek A'] || '',
+                                row['Seçenek B'] || '',
+                                row['Seçenek C'] || '',
+                                row['Seçenek D'] || ''
+                            ],
+                            correctAnswer: parseInt(row['Doğru Cevap']) || 0,
+                            explanation: row['Açıklama'] || ''
+                        };
+                        
+                        if (newQuestion.text && newQuestion.options.every(o => o)) {
+                            newQuestions.push(newQuestion);
+                        }
+                    });
+
+                    questionsDatabase = [...questionsDatabase, ...newQuestions];
+                    downloadQuestionsAsJS(questionsDatabase);
+                    alert(`${newQuestions.length} soru başarıyla içe aktarıldı!\nOtomatik olarak JS dosyası indirildi.`);
+                    setCurrentPage('menu');
+                };
+                reader.readAsBinaryString(file);
+            };
+
+            const downloadQuestionsAsJS = (questions) => {
+                const jsContent = `// Soru Veri Tabanı - Otomatik oluşturuldu\nexport const questionsDatabase = ${JSON.stringify(questions, null, 2)};`;
+                
+                const blob = new Blob([jsContent], { type: 'text/javascript' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'questions_database.js';
+                link.click();
+                URL.revokeObjectURL(url);
+            };
+
+            const downloadQuestionsAsExcel = () => {
+                const data = questionsDatabase.map(q => ({
+                    'Soru Metni': q.text,
+                    'Kategori': q.category,
+                    'Alt Kategori': q.subcategory,
+                    'Zorluk': q.difficulty,
+                    'Seçenek A': q.options[0],
+                    'Seçenek B': q.options[1],
+                    'Seçenek C': q.options[2],
+                    'Seçenek D': q.options[3],
+                    'Doğru Cevap': q.correctAnswer,
+                    'Açıklama': q.explanation
+                }));
+
+                const worksheet = XLSX.utils.json_to_sheet(data);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, 'Sorular');
+                XLSX.writeFile(workbook, 'sorular.xlsx');
+            };
+
+            const results = examFinished ? calculateResults() : null;
+
+            const styles = {
+                container: {
+                    minHeight: '100vh',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
+                    padding: '20px',
+                    color: '#333'
+                },
+                page: {
+                    maxWidth: '900px',
+                    margin: '0 auto',
+                    animation: 'slideIn 0.3s ease-out'
+                },
+                header: {
+                    textAlign: 'center',
+                    color: 'white',
+                    marginBottom: '40px',
+                    paddingTop: '20px'
+                },
+                title: {
+                    fontSize: '48px',
+                    margin: '0 0 10px 0',
+                    fontWeight: 'bold',
+                    textShadow: '0 2px 10px rgba(0,0,0,0.2)'
+                },
+                subtitle: {
+                    fontSize: '16px',
+                    margin: 0,
+                    opacity: 0.9
+                },
+                content: {
+                    backgroundColor: 'white',
+                    borderRadius: '20px',
+                    padding: '40px',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                    animation: 'fadeIn 0.4s ease-out'
+                },
+                selectionGroup: {
+                    marginBottom: '35px',
+                    paddingBottom: '35px',
+                    borderBottom: '2px solid #f0f0f0'
+                },
+                groupTitle: {
+                    fontSize: '18px',
+                    fontWeight: '600',
+                    color: '#667eea',
+                    marginTop: 0,
+                    marginBottom: '15px'
+                },
+                optionsGrid: {
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
+                    gap: '12px'
+                },
+                optionButton: {
+                    padding: '12px 16px',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: '10px',
+                    backgroundColor: 'white',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    transition: 'all 0.2s ease',
+                    color: '#555'
+                },
+                optionButtonActive: {
+                    backgroundColor: '#667eea',
+                    color: 'white',
+                    borderColor: '#667eea',
+                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)'
+                },
+                buttonGroup: {
+                    display: 'flex',
+                    gap: '12px',
+                    flexWrap: 'wrap',
+                    justifyContent: 'center'
+                },
+                primaryButton: {
+                    padding: '14px 32px',
+                    backgroundColor: '#667eea',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '10px',
+                    fontSize: '16px',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
+                    marginTop: '20px'
+                },
+                secondaryButton: {
+                    padding: '10px 20px',
+                    backgroundColor: '#f0f0f0',
+                    color: '#333',
+                    border: '2px solid #ddd',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                },
+                fileInputLabel: {
+                    padding: '10px 20px',
+                    backgroundColor: '#10b981',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                },
+                managementSection: {
+                    marginTop: '40px',
+                    paddingTop: '30px',
+                    borderTop: '2px solid #f0f0f0'
+                },
+                examHeader: {
+                    backgroundColor: 'white',
+                    borderRadius: '15px',
+                    padding: '20px',
+                    marginBottom: '25px',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+                },
+                examProgress: {
+                    flex: 1
+                },
+                progressBar: {
+                    height: '8px',
+                    backgroundColor: '#e0e0e0',
+                    borderRadius: '10px',
+                    marginTop: '8px',
+                    overflow: 'hidden'
+                },
+                progressFill: {
+                    height: '100%',
+                    backgroundColor: '#10b981',
+                    transition: 'width 0.3s ease'
+                },
+                exitButton: {
+                    backgroundColor: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '8px 16px',
+                    cursor: 'pointer',
+                    fontSize: '16px',
+                    fontWeight: '600'
+                },
+                examContent: {
+                    backgroundColor: 'white',
+                    borderRadius: '15px',
+                    padding: '40px',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
+                },
+                questionCard: {
+                    animation: 'slideUp 0.3s ease-out'
+                },
+                questionText: {
+                    fontSize: '22px',
+                    color: '#333',
+                    marginTop: 0,
+                    marginBottom: '30px',
+                    lineHeight: '1.6'
+                },
+                optionsContainer: {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px',
+                    marginBottom: '30px'
+                },
+                answerButton: {
+                    padding: '16px',
+                    border: '2px solid #e0e0e0',
+                    borderRadius: '10px',
+                    backgroundColor: 'white',
+                    cursor: 'pointer',
+                    fontSize: '15px',
+                    textAlign: 'left',
+                    transition: 'all 0.2s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px'
+                },
+                answerButtonSelected: {
+                    backgroundColor: '#667eea',
+                    color: 'white',
+                    borderColor: '#667eea',
+                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)'
+                },
+                answerLabel: {
+                    fontWeight: '600',
+                    minWidth: '30px'
+                },
+                examButtonGroup: {
+                    display: 'flex',
+                    gap: '12px',
+                    justifyContent: 'center'
+                },
+                navigationButton: {
+                    padding: '12px 24px',
+                    backgroundColor: '#667eea',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    fontWeight: '600',
+                    transition: 'all 0.2s ease'
+                },
+                finishButton: {
+                    backgroundColor: '#10b981'
+                },
+                resultsHeader: {
+                    textAlign: 'center',
+                    color: 'white',
+                    marginBottom: '30px'
+                },
+                resultsTitle: {
+                    fontSize: '42px',
+                    margin: '0 0 25px 0',
+                    textShadow: '0 2px 10px rgba(0,0,0,0.2)'
+                },
+                scoreBoard: {
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '20px',
+                    maxWidth: '500px',
+                    margin: '0 auto'
+                },
+                scoreItem: {
+                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    padding: '20px',
+                    borderRadius: '15px',
+                    backdropFilter: 'blur(10px)'
+                },
+                scoreNumber: {
+                    fontSize: '36px',
+                    fontWeight: 'bold',
+                    color: '#10b981'
+                },
+                scorePercent: {
+                    fontSize: '32px',
+                    fontWeight: 'bold',
+                    color: '#60a5fa'
+                },
+                scoreLabel: {
+                    fontSize: '12px',
+                    color: 'rgba(255,255,255,0.8)',
+                    marginTop: '8px',
+                    textTransform: 'uppercase'
+                },
+                resultsContent: {
+                    backgroundColor: 'white',
+                    borderRadius: '20px',
+                    padding: '40px',
+                    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+                    animation: 'fadeIn 0.4s ease-out'
+                },
+                wrongsTitle: {
+                    fontSize: '20px',
+                    color: '#333',
+                    marginTop: 0,
+                    marginBottom: '25px'
+                },
+                noWrongs: {
+                    textAlign: 'center',
+                    padding: '40px',
+                    backgroundColor: '#f0fdf4',
+                    borderRadius: '12px',
+                    color: '#10b981',
+                    fontSize: '18px',
+                    fontWeight: '600'
+                },
+                wrongsList: {
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '20px',
+                    marginBottom: '30px'
+                },
+                wrongItem: {
+                    padding: '20px',
+                    backgroundColor: '#fef2f2',
+                    borderLeft: '4px solid #ef4444',
+                    borderRadius: '8px'
+                },
+                wrongQuestion: {
+                    margin: '0 0 15px 0',
+                    color: '#333',
+                    fontSize: '16px'
+                },
+                wrongDetail: {
+                    display: 'flex',
+                    gap: '10px',
+                    marginBottom: '10px',
+                    fontSize: '14px'
+                },
+                wrongLabel: {
+                    fontWeight: '600',
+                    color: '#666'
+                },
+                wrongValue: {
+                    color: '#ef4444',
+                    fontStyle: 'italic'
+                },
+                correctValue: {
+                    color: '#10b981',
+                    fontWeight: '600'
+                },
+                explanation: {
+                    marginTop: '15px',
+                    padding: '12px',
+                    backgroundColor: 'rgba(0,0,0,0.05)',
+                    borderRadius: '6px',
+                    fontSize: '13px',
+                    color: '#555',
+                    lineHeight: '1.5'
+                }
+            };
+
+            return (
+                <div style={styles.container}>
+                    {currentPage === 'menu' && (
+                        <div style={styles.page}>
+                            <div style={styles.header}>
+                                <h1 style={styles.title}>📚 Sınav Sistemi</h1>
+                                <p style={styles.subtitle}>Toplam {questionsDatabase.length} soru</p>
+                            </div>
+
+                            <div style={styles.content}>
+                                <div style={styles.selectionGroup}>
+                                    <h3 style={styles.groupTitle}>1. Kategori Seçin</h3>
+                                    <div style={styles.optionsGrid}>
+                                        {getCategories().map(cat => (
+                                            <button
+                                                key={cat}
+                                                style={{
+                                                    ...styles.optionButton,
+                                                    ...(selectedCategory === cat ? styles.optionButtonActive : {})
+                                                }}
+                                                onClick={() => {
+                                                    setSelectedCategory(selectedCategory === cat ? null : cat);
+                                                    setSelectedSubcategory(null);
+                                                }}
+                                            >
+                                                {cat}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {selectedCategory && (
+                                    <div style={styles.selectionGroup}>
+                                        <h3 style={styles.groupTitle}>2. Alt Kategori Seçin</h3>
+                                        <div style={styles.optionsGrid}>
+                                            {getSubcategories(selectedCategory).map(subcat => (
+                                                <button
+                                                    key={subcat}
+                                                    style={{
+                                                        ...styles.optionButton,
+                                                        ...(selectedSubcategory === subcat ? styles.optionButtonActive : {})
+                                                    }}
+                                                    onClick={() => setSelectedSubcategory(selectedSubcategory === subcat ? null : subcat)}
+                                                >
+                                                    {subcat}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div style={styles.selectionGroup}>
+                                    <h3 style={styles.groupTitle}>3. Zorluk Seviyesi Seçin</h3>
+                                    <div style={styles.optionsGrid}>
+                                        {getDifficulties().map(diff => (
+                                            <button
+                                                key={diff}
+                                                style={{
+                                                    ...styles.optionButton,
+                                                    ...(selectedDifficulty === diff ? styles.optionButtonActive : {})
+                                                }}
+                                                onClick={() => setSelectedDifficulty(selectedDifficulty === diff ? null : diff)}
+                                            >
+                                                {diff}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div style={styles.selectionGroup}>
+                                    <h3 style={styles.groupTitle}>4. Soru Sayısı Seçin</h3>
+                                    <div style={styles.optionsGrid}>
+                                        {[10, 20, 50, 100].map(count => (
+                                            <button
+                                                key={count}
+                                                style={{
+                                                    ...styles.optionButton,
+                                                    ...(questionCount === count ? styles.optionButtonActive : {})
+                                                }}
+                                                onClick={() => setQuestionCount(questionCount === count ? null : count)}
+                                            >
+                                                {count}
+                                            </button>
+                                        ))}
+                                        <button
+                                            style={{
+                                                ...styles.optionButton,
+                                                ...(questionCount === 'unlimited' ? styles.optionButtonActive : {})
+                                            }}
+                                            onClick={() => setQuestionCount(questionCount === 'unlimited' ? null : 'unlimited')}
+                                        >
+                                            Sınırsız
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div style={styles.buttonGroup}>
+                                    <button
+                                        style={{...styles.primaryButton, opacity: questionCount ? 1 : 0.5}}
+                                        onClick={startExam}
+                                        disabled={!questionCount}
+                                    >
+                                        🚀 Sınavı Başlat
+                                    </button>
+                                </div>
+
+                                <div style={styles.managementSection}>
+                                    <h3 style={styles.groupTitle}>📊 Soru Yönetimi</h3>
+                                    <div style={styles.buttonGroup}>
+                                        <label style={styles.fileInputLabel}>
+                                            📥 Excel'den İçe Aktar
+                                            <input
+                                                type="file"
+                                                accept=".xlsx,.xls"
+                                                onChange={(e) => e.target.files[0] && handleExcelImport(e.target.files[0])}
+                                                style={{display: 'none'}}
+                                            />
+                                        </label>
+                                        <button
+                                            style={styles.secondaryButton}
+                                            onClick={downloadQuestionsAsExcel}
+                                        >
+                                            📤 Excel'e Aktar
+                                        </button>
+                                        <button
+                                            style={styles.secondaryButton}
+                                            onClick={() => downloadQuestionsAsJS(questionsDatabase)}
+                                        >
+                                            💾 JS Dosyası İndir
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {currentPage === 'exam' && !examFinished && (
+                        <div style={styles.page}>
+                            <div style={styles.examHeader}>
+                                <div style={styles.examProgress}>
+                                    <span>Soru {currentQuestion + 1} / {examQuestions.length}</span>
+                                    <div style={styles.progressBar}>
+                                        <div
+                                            style={{
+                                                ...styles.progressFill,
+                                                width: `${((currentQuestion + 1) / examQuestions.length) * 100}%`
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                                <button
+                                    style={styles.exitButton}
+                                    onClick={() => {
+                                        if (confirm('Sınavı sonlandırmak istediğinize emin misiniz?')) {
+                                            setCurrentPage('menu');
+                                        }
+                                    }}
+                                >
+                                    ✕ Çık
+                                </button>
+                            </div>
+
+                            <div style={styles.examContent}>
+                                <div style={styles.questionCard}>
+                                    <h2 style={styles.questionText}>
+                                        {examQuestions[currentQuestion].text}
+                                    </h2>
+                                    
+                                    <div style={styles.optionsContainer}>
+                                        {examQuestions[currentQuestion].options.map((option, idx) => (
+                                            <button
+                                                key={idx}
+                                                style={{
+                                                    ...styles.answerButton,
+                                                    ...(userAnswers[currentQuestion] === idx ? styles.answerButtonSelected : {})
+                                                }}
+                                                onClick={() => handleAnswer(idx)}
+                                            >
+                                                <span style={styles.answerLabel}>{String.fromCharCode(65 + idx)})</span>
+                                                {option}
+                                            </button>
+                                        ))}
+                                    </div>
+
+                                    <div style={styles.examButtonGroup}>
+                                        <button
+                                            style={{...styles.navigationButton, opacity: currentQuestion > 0 ? 1 : 0.5}}
+                                            onClick={goPrevQuestion}
+                                            disabled={currentQuestion === 0}
+                                        >
+                                            ← Önceki
+                                        </button>
+                                        
+                                        {currentQuestion < examQuestions.length - 1 ? (
+                                            <button
+                                                style={styles.navigationButton}
+                                                onClick={goNextQuestion}
+                                            >
+                                                Sonraki →
+                                            </button>
+                                        ) : (
+                                            <button
+                                                style={{...styles.navigationButton, ...styles.finishButton}}
+                                                onClick={finishExam}
+                                            >
+                                                Sınavı Bitir ✓
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {currentPage === 'results' && results && (
+                        <div style={styles.page}>
+                            <div style={styles.resultsHeader}>
+                                <h1 style={styles.resultsTitle}>✓ Sınav Tamamlandı</h1>
+                                <div style={styles.scoreBoard}>
+                                    <div style={styles.scoreItem}>
+                                        <div style={styles.scoreNumber}>{results.correct}</div>
+                                        <div style={styles.scoreLabel}>Doğru</div>
+                                    </div>
+                                    <div style={styles.scoreItem}>
+                                        <div style={{...styles.scoreNumber, color: '#ef4444'}}>{results.wrong.length}</div>
+                                        <div style={styles.scoreLabel}>Yanlış</div>
+                                    </div>
+                                    <div style={styles.scoreItem}>
+                                        <div style={styles.scorePercent}>
+                                            {Math.round((results.correct / results.total) * 100)}%
+                                        </div>
+                                        <div style={styles.scoreLabel}>Başarı</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style={styles.resultsContent}>
+                                <h3 style={styles.wrongsTitle}>❌ Yanlış Cevaplar</h3>
+                                {results.wrong.length === 0 ? (
+                                    <div style={styles.noWrongs}>Tüm sorulara doğru cevap verdiniz! 🎉</div>
+                                ) : (
+                                    <div style={styles.wrongsList}>
+                                        {results.wrong.map((item, idx) => (
+                                            <div key={idx} style={styles.wrongItem}>
+                                                <h4 style={styles.wrongQuestion}>{item.question.text}</h4>
+                                                <div style={styles.wrongDetail}>
+                                                    <span style={styles.wrongLabel}>Sizin cevabınız:</span>
+                                                    <span style={styles.wrongValue}>{item.userAnswer}</span>
+                                                </div>
+                                                <div style={styles.wrongDetail}>
+                                                    <span style={styles.wrongLabel}>Doğru cevap:</span>
+                                                    <span style={styles.correctValue}>{item.correctAnswer}</span>
+                                                </div>
+                                                {item.question.explanation && (
+                                                    <div style={styles.explanation}>
+                                                        <strong>💡 Açıklama:</strong> {item.question.explanation}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div style={styles.buttonGroup}>
+                                    <button
+                                        style={styles.primaryButton}
+                                        onClick={() => setCurrentPage('menu')}
+                                    >
+                                        🏠 Ana Menüye Dön
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ExamSystem />);
+    </script>
+</body>
+</html>
