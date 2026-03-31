@@ -7,987 +7,741 @@
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #dbeafe;
+            --success: #059669; --success-light: #d1fae5;
+            --danger: #dc2626; --danger-light: #fee2e2;
+            --warning: #d97706; --warning-light: #fef3c7;
+            --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1; --gray-400: #94a3b8; --gray-500: #64748b;
+            --gray-600: #475569; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a;
+            --sidebar-w: 240px; --radius: 8px;
         }
+        body { font-family: 'IBM Plex Sans', sans-serif; background: var(--gray-50); color: var(--gray-800); min-height: 100vh; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--gray-100); }
+        ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+        #root { min-height: 100vh; }
 
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+        /* LOGIN */
+        .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%); }
+        .login-card { background: white; border-radius: 16px; padding: 48px; width: 420px; max-width: 90vw; box-shadow: 0 25px 60px rgba(0,0,0,0.4); animation: fadeIn 0.4s ease; }
+        .login-logo-icon { width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary), #7c3aed); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 16px; }
+        .login-title { font-size: 24px; font-weight: 700; color: var(--gray-900); text-align: center; }
+        .login-subtitle { font-size: 14px; color: var(--gray-500); margin-top: 4px; text-align: center; margin-bottom: 32px; }
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--gray-700); margin-bottom: 6px; }
+        .form-input { width: 100%; padding: 10px 14px; border: 2px solid var(--gray-200); border-radius: var(--radius); font-size: 15px; font-family: inherit; transition: border-color 0.2s; background: var(--gray-50); color: var(--gray-800); }
+        .form-input:focus { outline: none; border-color: var(--primary); background: white; }
+        .form-input.err { border-color: var(--danger); }
+        .error-msg { font-size: 13px; color: var(--danger); margin-top: 6px; }
+        .btn-login { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--primary), #7c3aed); color: white; border: none; border-radius: var(--radius); font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; }
+        .login-hint { text-align: center; margin-top: 20px; font-size: 12px; color: var(--gray-400); padding: 12px; background: var(--gray-50); border-radius: var(--radius); border: 1px dashed var(--gray-200); }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
+        /* SHELL */
+        .app-shell { display: flex; min-height: 100vh; }
+        .sidebar { width: var(--sidebar-w); background: var(--gray-900); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; }
+        .sidebar-header { padding: 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        .sidebar-brand { display: flex; align-items: center; gap: 10px; }
+        .sidebar-brand-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), #7c3aed); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .sidebar-brand-text { font-size: 15px; font-weight: 700; color: white; }
+        .sidebar-brand-sub { font-size: 11px; color: var(--gray-400); font-family: 'IBM Plex Mono', monospace; }
+        .sidebar-nav { flex: 1; padding: 16px 8px; overflow-y: auto; }
+        .nav-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray-500); padding: 8px 10px 6px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 7px; cursor: pointer; color: var(--gray-400); font-size: 14px; font-weight: 500; transition: all 0.15s; margin-bottom: 2px; border: none; background: none; width: 100%; text-align: left; }
+        .nav-item:hover { background: rgba(255,255,255,0.07); color: white; }
+        .nav-item.active { background: rgba(37,99,235,0.25); color: #93c5fd; }
+        .nav-item-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+        .nav-badge { margin-left: auto; background: var(--primary); color: white; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 20px; font-family: 'IBM Plex Mono', monospace; }
+        .sidebar-footer { padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.08); }
+        .user-badge { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: rgba(255,255,255,0.06); border-radius: 7px; }
+        .user-avatar { width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary), #7c3aed); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+        .user-name { font-size: 13px; font-weight: 600; color: white; }
+        .user-role { font-size: 11px; color: var(--gray-400); }
+        .btn-logout { margin-left: auto; background: none; border: none; color: var(--gray-400); cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; transition: color 0.15s; }
+        .btn-logout:hover { color: var(--danger); }
 
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+        /* MAIN */
+        .main-content { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+        .topbar { background: white; border-bottom: 1px solid var(--gray-200); padding: 14px 28px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 50; }
+        .topbar-title { font-size: 18px; font-weight: 700; color: var(--gray-900); }
+        .topbar-subtitle { font-size: 13px; color: var(--gray-500); }
+        .page-body { padding: 28px; flex: 1; animation: fadeIn 0.3s ease; }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
+        /* STATS */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 28px; }
+        .stat-card { background: white; border: 1px solid var(--gray-200); border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 14px; }
+        .stat-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+        .stat-value { font-size: 28px; font-weight: 700; color: var(--gray-900); line-height: 1; }
+        .stat-label { font-size: 12px; color: var(--gray-500); margin-top: 3px; font-weight: 500; }
 
-        #root {
-            min-height: 100vh;
-            padding: 20px;
+        /* TABLE */
+        .table-container { background: white; border: 1px solid var(--gray-200); border-radius: 12px; overflow: hidden; }
+        .table-toolbar { padding: 16px 20px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .search-wrap { position: relative; }
+        .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 14px; pointer-events: none; }
+        .search-input { padding: 8px 12px 8px 34px; border: 1px solid var(--gray-200); border-radius: var(--radius); font-size: 14px; font-family: inherit; width: 240px; background: var(--gray-50); }
+        .search-input:focus { outline: none; border-color: var(--primary); background: white; }
+        .filter-select { padding: 8px 12px; border: 1px solid var(--gray-200); border-radius: var(--radius); font-size: 13px; font-family: inherit; background: var(--gray-50); color: var(--gray-700); cursor: pointer; }
+        .filter-select:focus { outline: none; border-color: var(--primary); }
+        .data-table { width: 100%; border-collapse: collapse; }
+        .data-table th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-500); background: var(--gray-50); border-bottom: 1px solid var(--gray-200); white-space: nowrap; }
+        .data-table td { padding: 11px 14px; font-size: 14px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover td { background: var(--gray-50); }
+        .q-text { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+        .badge-blue { background: var(--primary-light); color: #1d4ed8; }
+        .badge-green { background: var(--success-light); color: #065f46; }
+        .badge-yellow { background: var(--warning-light); color: #92400e; }
+        .badge-red { background: var(--danger-light); color: #991b1b; }
+        .badge-gray { background: var(--gray-100); color: var(--gray-600); }
+        .action-btns { display: flex; gap: 6px; }
+        .btn-icon { padding: 5px 8px; border-radius: 6px; border: 1px solid var(--gray-200); background: white; cursor: pointer; font-size: 13px; transition: all 0.15s; color: var(--gray-600); }
+        .btn-icon:hover { background: var(--gray-100); }
+        .btn-icon.danger:hover { background: var(--danger-light); color: var(--danger); border-color: #fca5a5; }
+        .btn-icon.primary:hover { background: var(--primary-light); color: var(--primary); border-color: #93c5fd; }
+
+        /* BUTTONS */
+        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border: none; transition: all 0.15s; white-space: nowrap; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); }
+        .btn-success { background: var(--success); color: white; }
+        .btn-success:hover { background: #047857; }
+        .btn-ghost { background: white; color: var(--gray-700); border: 1px solid var(--gray-200); }
+        .btn-ghost:hover { background: var(--gray-50); }
+        .btn-danger { background: var(--danger); color: white; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+        /* MODAL */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; animation: fadeIn 0.2s ease; }
+        .modal { background: white; border-radius: 14px; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 60px rgba(0,0,0,0.35); animation: fadeIn 0.25s ease; }
+        .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: white; z-index: 1; }
+        .modal-title { font-size: 17px; font-weight: 700; color: var(--gray-900); }
+        .modal-close { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--gray-200); background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--gray-500); transition: all 0.15s; }
+        .modal-close:hover { background: var(--gray-100); }
+        .modal-body { padding: 24px; }
+        .modal-footer { padding: 16px 24px; border-top: 1px solid var(--gray-200); display: flex; gap: 10px; justify-content: flex-end; background: var(--gray-50); border-radius: 0 0 14px 14px; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-full { grid-column: 1 / -1; }
+        .mfi { width: 100%; padding: 9px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 14px; font-family: inherit; transition: border-color 0.2s; background: white; color: var(--gray-800); }
+        .mfi:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .option-row { display: flex; align-items: center; gap: 8px; }
+        .option-label { width: 26px; height: 26px; border-radius: 6px; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--gray-600); flex-shrink: 0; }
+        .option-label.correct { background: var(--success); color: white; }
+
+        /* PAGINATION */
+        .pagination { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-top: 1px solid var(--gray-200); background: var(--gray-50); }
+        .pagination-info { font-size: 13px; color: var(--gray-500); }
+        .pagination-btns { display: flex; gap: 6px; }
+        .page-btn { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--gray-200); background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; transition: all 0.15s; }
+        .page-btn:hover:not(:disabled) { background: var(--primary); color: white; border-color: var(--primary); }
+        .page-btn.current { background: var(--primary); color: white; border-color: var(--primary); }
+        .page-btn:disabled { opacity: 0.4; cursor: default; }
+
+        /* TOAST */
+        .toast { position: fixed; bottom: 24px; right: 24px; background: var(--gray-900); color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 10px; animation: fadeIn 0.3s ease; max-width: 360px; }
+        .toast.success { background: #064e3b; border-left: 4px solid var(--success); }
+        .toast.error { background: #7f1d1d; border-left: 4px solid var(--danger); }
+        .toast.info { background: #1e3a5f; border-left: 4px solid var(--primary); }
+
+        /* EXAM MENU */
+        .menu-wrap { max-width: 860px; margin: 0 auto; }
+        .section-card { background: white; border: 1px solid var(--gray-200); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+        .section-card-title { font-size: 15px; font-weight: 700; color: var(--gray-800); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+        .chip-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+        .chip { padding: 7px 16px; border: 2px solid var(--gray-200); border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; background: white; color: var(--gray-600); transition: all 0.15s; font-family: inherit; }
+        .chip:hover { border-color: var(--primary); color: var(--primary); }
+        .chip.active { background: var(--primary); border-color: var(--primary); color: white; }
+
+        /* EXAM */
+        .exam-wrap { max-width: 820px; margin: 0 auto; padding: 30px 20px; }
+        .exam-topbar { background: white; border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        .progress-bar { height: 6px; background: var(--gray-200); border-radius: 3px; margin-top: 6px; overflow: hidden; flex: 1; max-width: 300px; }
+        .progress-fill { height: 100%; background: var(--success); border-radius: 3px; transition: width 0.3s; }
+        .exam-card { background: white; border-radius: 12px; padding: 36px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        .question-num { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
+        .question-text { font-size: 20px; color: var(--gray-900); line-height: 1.6; margin-bottom: 28px; }
+        .answers { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+        .answer-btn { padding: 14px 16px; border: 2px solid var(--gray-200); border-radius: 10px; background: white; cursor: pointer; font-size: 15px; font-family: inherit; text-align: left; display: flex; align-items: center; gap: 12px; transition: all 0.15s; color: var(--gray-700); }
+        .answer-btn:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
+        .answer-btn.selected { border-color: var(--primary); background: var(--primary); color: white; }
+        .answer-letter { width: 28px; height: 28px; border-radius: 6px; background: rgba(0,0,0,0.07); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+        .exam-nav { display: flex; gap: 12px; justify-content: center; }
+
+        /* RESULTS */
+        .score-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; max-width: 500px; margin: 28px auto; }
+        .score-box { background: white; border: 1px solid var(--gray-200); border-radius: 12px; padding: 20px; text-align: center; }
+        .score-num { font-size: 36px; font-weight: 800; line-height: 1; }
+        .score-lbl { font-size: 12px; color: var(--gray-500); margin-top: 6px; text-transform: uppercase; font-weight: 600; }
+
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--gray-400); }
+
+        @media (max-width: 768px) {
+            :root { --sidebar-w: 0px; }
+            .sidebar { display: none; }
+            .form-grid { grid-template-columns: 1fr; }
+            .options-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <div id="root"></div>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
 
-    <script type="text/babel">
-        // Soru Veri Tabanı
-        let questionsDatabase = [
-            {
-                id: 1,
-                text: "Türkiye'nin başkenti neresidir?",
-                category: "Coğrafya",
-                subcategory: "Türkiye",
-                difficulty: "Kolay",
-                options: ["İstanbul", "Ankara", "İzmir", "Bursa"],
-                correctAnswer: 1,
-                explanation: "Ankara, 1923'ten beri Türkiye'nin başkenti."
-            },
-            {
-                id: 2,
-                text: "Anadolu'nun en yüksek dağı hangisidir?",
-                category: "Coğrafya",
-                subcategory: "Türkiye",
-                difficulty: "Orta",
-                options: ["Kaçkar Dağı", "Erciyes Dağı", "Aladag", "Suphan Dağı"],
-                correctAnswer: 2,
-                explanation: "Erciyes Dağı 3917 metredir."
-            },
-            {
-                id: 3,
-                text: "Dünya'nın en yüksek dağı hangisidir?",
-                category: "Coğrafya",
-                subcategory: "Dünya",
-                difficulty: "Kolay",
-                options: ["K2", "Everest", "Kilimanjaro", "Denali"],
-                correctAnswer: 1,
-                explanation: "Mount Everest 8.848 metre yüksekliğe sahiptir."
-            },
-            {
-                id: 4,
-                text: "2+2 kaçtır?",
-                category: "Matematik",
-                subcategory: "Temel İşlemler",
-                difficulty: "Kolay",
-                options: ["3", "4", "5", "6"],
-                correctAnswer: 1,
-                explanation: "2+2=4"
-            },
-            {
-                id: 5,
-                text: "15 × 12 kaçtır?",
-                category: "Matematik",
-                subcategory: "Temel İşlemler",
-                difficulty: "Orta",
-                options: ["150", "160", "180", "200"],
-                correctAnswer: 2,
-                explanation: "15 × 12 = 180"
-            },
-            {
-                id: 6,
-                text: "Pisagor Teoremi nedir?",
-                category: "Matematik",
-                subcategory: "Geometri",
-                difficulty: "Zor",
-                options: ["a+b=c", "a²+b²=c²", "a³+b³=c³", "a/b=c"],
-                correctAnswer: 1,
-                explanation: "Dik üçgende hipotenüsün karesi, diğer iki kenarın kareleri toplamına eşittir."
-            },
-            {
-                id: 7,
-                text: "Bir dairenin alanı nasıl hesaplanır?",
-                category: "Matematik",
-                subcategory: "Geometri",
-                difficulty: "Orta",
-                options: ["πr", "2πr", "πr²", "πd²"],
-                correctAnswer: 2,
-                explanation: "Daire alanı = πr² (π × yarıçap²)"
-            },
-            {
-                id: 8,
-                text: "Mitokondri neyin organeli?",
-                category: "Biyoloji",
-                subcategory: "Hücre",
-                difficulty: "Orta",
-                options: ["Çekirdek", "Hücre", "Kalp", "Beyin"],
-                correctAnswer: 1,
-                explanation: "Mitokondri hücrenin enerji fabrikasıdır."
-            },
-            {
-                id: 9,
-                text: "Fotosentez nedir?",
-                category: "Biyoloji",
-                subcategory: "Bitki Fizyolojisi",
-                difficulty: "Orta",
-                options: ["Işık yayan bir olay", "Bitkinin ışığı enerjiye dönüştürdüğü olay", "Su üreten olay", "Mitokondride gerçekleşen olay"],
-                correctAnswer: 1,
-                explanation: "Fotosentez, bitkiler tarafından ışık enerjisinin kimyasal enerjiye dönüştürüldüğü biyolojik olaydır."
-            },
-            {
-                id: 10,
-                text: "İnsan vücudunda kaç kemik bulunur?",
-                category: "Biyoloji",
-                subcategory: "İnsan Anatomisi",
-                difficulty: "Kolay",
-                options: ["150", "206", "250", "300"],
-                correctAnswer: 1,
-                explanation: "Erişkin insan vücudunda 206 kemik bulunur."
-            },
-            {
-                id: 11,
-                text: "DNA'nın tam adı nedir?",
-                category: "Biyoloji",
-                subcategory: "Genetik",
-                difficulty: "Kolay",
-                options: ["Deoxyribose Nucleic Acid", "Deoxyribonucleic Acid", "Deoxynucleic Acid", "Diribonucleic Acid"],
-                correctAnswer: 1,
-                explanation: "DNA'nın tam adı Deoxyribonucleic Acid (Deoksiribonükleik Asit) dir."
-            },
-            {
-                id: 12,
-                text: "İçerik Yönetim Sistemi'nin İngilizce kısaltması nedir?",
-                category: "Bilgisayar",
-                subcategory: "Web Teknolojileri",
-                difficulty: "Kolay",
-                options: ["CMS", "IYS", "WMS", "DMS"],
-                correctAnswer: 0,
-                explanation: "Content Management System (CMS), web sitesi yönetimi için kullanılan yazılım sistemidir."
-            },
-            {
-                id: 13,
-                text: "HTML'in anlamı nedir?",
-                category: "Bilgisayar",
-                subcategory: "Web Teknolojileri",
-                difficulty: "Kolay",
-                options: ["Hyper Tool Markup Language", "High Text Mark Language", "HyperText Markup Language", "Hyper Timed Markup Language"],
-                correctAnswer: 2,
-                explanation: "HTML (HyperText Markup Language), web sayfaları oluşturmak için kullanılan işaretleme dilidir."
-            },
-            {
-                id: 14,
-                text: "Python programlama dili kaç yılında oluşturulmuştur?",
-                category: "Bilgisayar",
-                subcategory: "Programlama",
-                difficulty: "Orta",
-                options: ["1989", "1991", "1993", "1995"],
-                correctAnswer: 1,
-                explanation: "Python, Guido van Rossum tarafından 1989 yılında tasarlanmış, 1991'de ilk versiyonu yayınlanmıştır."
-            }
-        ];
+const DEFAULT_QUESTIONS = [
+    { id: 1, text: "Türkiye'nin başkenti neresidir?", category: "Coğrafya", subcategory: "Türkiye", difficulty: "Kolay", options: ["İstanbul", "Ankara", "İzmir", "Bursa"], correctAnswer: 1, explanation: "Ankara, 1923'ten beri Türkiye'nin başkenti." },
+    { id: 2, text: "Anadolu'nun en yüksek dağı hangisidir?", category: "Coğrafya", subcategory: "Türkiye", difficulty: "Orta", options: ["Kaçkar Dağı", "Erciyes Dağı", "Aladag", "Suphan Dağı"], correctAnswer: 1, explanation: "Erciyes Dağı 3917 metredir." },
+    { id: 3, text: "Dünya'nın en yüksek dağı hangisidir?", category: "Coğrafya", subcategory: "Dünya", difficulty: "Kolay", options: ["K2", "Everest", "Kilimanjaro", "Denali"], correctAnswer: 1, explanation: "Mount Everest 8.848 metre." },
+    { id: 4, text: "2+2 kaçtır?", category: "Matematik", subcategory: "Temel İşlemler", difficulty: "Kolay", options: ["3", "4", "5", "6"], correctAnswer: 1, explanation: "2+2=4" },
+    { id: 5, text: "15 × 12 kaçtır?", category: "Matematik", subcategory: "Temel İşlemler", difficulty: "Orta", options: ["150", "160", "180", "200"], correctAnswer: 2, explanation: "15 × 12 = 180" },
+    { id: 6, text: "Pisagor Teoremi nedir?", category: "Matematik", subcategory: "Geometri", difficulty: "Zor", options: ["a+b=c", "a²+b²=c²", "a³+b³=c³", "a/b=c"], correctAnswer: 1, explanation: "Dik üçgende hipotenüsün karesi, diğer iki kenarın kareleri toplamına eşittir." },
+    { id: 7, text: "Bir dairenin alanı nasıl hesaplanır?", category: "Matematik", subcategory: "Geometri", difficulty: "Orta", options: ["πr", "2πr", "πr²", "πd²"], correctAnswer: 2, explanation: "Daire alanı = πr²" },
+    { id: 8, text: "Mitokondri neyin organeli?", category: "Biyoloji", subcategory: "Hücre", difficulty: "Orta", options: ["Çekirdek", "Hücre", "Kalp", "Beyin"], correctAnswer: 1, explanation: "Mitokondri hücrenin enerji fabrikasıdır." },
+    { id: 9, text: "Fotosentez nedir?", category: "Biyoloji", subcategory: "Bitki Fizyolojisi", difficulty: "Orta", options: ["Işık yayan bir olay", "Bitkinin ışığı enerjiye dönüştürdüğü olay", "Su üreten olay", "Mitokondride gerçekleşen olay"], correctAnswer: 1, explanation: "Fotosentez, ışık enerjisinin kimyasal enerjiye dönüştürüldüğü biyolojik olaydır." },
+    { id: 10, text: "İnsan vücudunda kaç kemik bulunur?", category: "Biyoloji", subcategory: "İnsan Anatomisi", difficulty: "Kolay", options: ["150", "206", "250", "300"], correctAnswer: 1, explanation: "Erişkin insan vücudunda 206 kemik bulunur." },
+    { id: 11, text: "DNA'nın tam adı nedir?", category: "Biyoloji", subcategory: "Genetik", difficulty: "Kolay", options: ["Deoxyribose Nucleic Acid", "Deoxyribonucleic Acid", "Deoxynucleic Acid", "Diribonucleic Acid"], correctAnswer: 1, explanation: "DNA: Deoxyribonucleic Acid." },
+    { id: 12, text: "İçerik Yönetim Sistemi'nin İngilizce kısaltması nedir?", category: "Bilgisayar", subcategory: "Web Teknolojileri", difficulty: "Kolay", options: ["CMS", "IYS", "WMS", "DMS"], correctAnswer: 0, explanation: "Content Management System (CMS)." },
+    { id: 13, text: "HTML'in anlamı nedir?", category: "Bilgisayar", subcategory: "Web Teknolojileri", difficulty: "Kolay", options: ["Hyper Tool Markup Language", "High Text Mark Language", "HyperText Markup Language", "Hyper Timed Markup Language"], correctAnswer: 2, explanation: "HyperText Markup Language." },
+    { id: 14, text: "Python programlama dili kaç yılında yayınlanmıştır?", category: "Bilgisayar", subcategory: "Programlama", difficulty: "Orta", options: ["1989", "1991", "1993", "1995"], correctAnswer: 1, explanation: "Python'un ilk versiyonu 1991'de yayınlandı." }
+];
 
-        function ExamSystem() {
-            const [currentPage, setCurrentPage] = React.useState('menu');
-            const [selectedCategory, setSelectedCategory] = React.useState(null);
-            const [selectedSubcategory, setSelectedSubcategory] = React.useState(null);
-            const [selectedDifficulty, setSelectedDifficulty] = React.useState(null);
-            const [questionCount, setQuestionCount] = React.useState(null);
-            const [examQuestions, setExamQuestions] = React.useState([]);
-            const [currentQuestion, setCurrentQuestion] = React.useState(0);
-            const [userAnswers, setUserAnswers] = React.useState({});
-            const [examFinished, setExamFinished] = React.useState(false);
+const USERS = [
+    { username: 'admin', password: 'admin123', name: 'Admin', role: 'Yönetici' },
+    { username: 'editor', password: 'editor123', name: 'Editör', role: 'Editör' }
+];
 
-            const getCategories = () => {
-                const categories = [...new Set(questionsDatabase.map(q => q.category))];
-                return categories;
-            };
+const DIFFICULTIES = ['Kolay', 'Orta', 'Zor'];
+const diffBadge = d => d === 'Kolay' ? 'badge-green' : d === 'Orta' ? 'badge-yellow' : 'badge-red';
 
-            const getSubcategories = (category) => {
-                const subcategories = [...new Set(
-                    questionsDatabase
-                        .filter(q => q.category === category)
-                        .map(q => q.subcategory)
-                )];
-                return subcategories;
-            };
+function gs(k, fb) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } }
+function ss(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
 
-            const getDifficulties = () => {
-                const difficulties = [...new Set(questionsDatabase.map(q => q.difficulty))];
-                return difficulties;
-            };
+function Toast({ msg, type, onDone }) {
+    useEffect(() => { const t = setTimeout(onDone, 3000); return () => clearTimeout(t); }, []);
+    return <div className={`toast ${type}`}><span>{type==='success'?'✓':type==='error'?'✕':'ℹ'}</span>{msg}</div>;
+}
 
-            const startExam = () => {
-                let filtered = questionsDatabase;
+const blankQ = () => ({ text:'', category:'', subcategory:'', difficulty:'Orta', options:['','','',''], correctAnswer:0, explanation:'' });
 
-                if (selectedCategory) {
-                    filtered = filtered.filter(q => q.category === selectedCategory);
-                }
-                if (selectedSubcategory) {
-                    filtered = filtered.filter(q => q.subcategory === selectedSubcategory);
-                }
-                if (selectedDifficulty) {
-                    filtered = filtered.filter(q => q.difficulty === selectedDifficulty);
-                }
-
-                let selectedQuestions = filtered;
-                if (questionCount !== null && questionCount !== 'unlimited') {
-                    selectedQuestions = filtered.slice(0, questionCount);
-                }
-
-                if (selectedQuestions.length === 0) {
-                    alert('Seçim kriterlerine uygun soru bulunamadı!');
-                    return;
-                }
-
-                setExamQuestions(selectedQuestions);
-                setUserAnswers({});
-                setCurrentQuestion(0);
-                setExamFinished(false);
-                setCurrentPage('exam');
-            };
-
-            const handleAnswer = (optionIndex) => {
-                setUserAnswers({
-                    ...userAnswers,
-                    [currentQuestion]: optionIndex
-                });
-            };
-
-            const goNextQuestion = () => {
-                if (currentQuestion < examQuestions.length - 1) {
-                    setCurrentQuestion(currentQuestion + 1);
-                } else {
-                    finishExam();
-                }
-            };
-
-            const goPrevQuestion = () => {
-                if (currentQuestion > 0) {
-                    setCurrentQuestion(currentQuestion - 1);
-                }
-            };
-
-            const finishExam = () => {
-                setExamFinished(true);
-                setCurrentPage('results');
-            };
-
-            const calculateResults = () => {
-                let correct = 0;
-                let wrong = [];
-
-                examQuestions.forEach((q, idx) => {
-                    const userAnswer = userAnswers[idx];
-                    if (userAnswer === q.correctAnswer) {
-                        correct++;
-                    } else {
-                        wrong.push({
-                            question: q,
-                            userAnswer: userAnswer !== undefined ? q.options[userAnswer] : 'Cevap verilmedi',
-                            correctAnswer: q.options[q.correctAnswer]
-                        });
-                    }
-                });
-
-                return { correct, wrong, total: examQuestions.length };
-            };
-
-            const handleExcelImport = async (file) => {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const workbook = XLSX.read(e.target.result, { type: 'binary' });
-                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const data = XLSX.utils.sheet_to_json(worksheet);
-
-                    let newQuestions = [];
-                    data.forEach((row, idx) => {
-                        const newQuestion = {
-                            id: questionsDatabase.length + newQuestions.length + 1,
-                            text: row['Soru Metni'] || '',
-                            category: row['Kategori'] || 'Diğer',
-                            subcategory: row['Alt Kategori'] || 'Genel',
-                            difficulty: row['Zorluk'] || 'Orta',
-                            options: [
-                                row['Seçenek A'] || '',
-                                row['Seçenek B'] || '',
-                                row['Seçenek C'] || '',
-                                row['Seçenek D'] || ''
-                            ],
-                            correctAnswer: parseInt(row['Doğru Cevap']) || 0,
-                            explanation: row['Açıklama'] || ''
-                        };
-                        
-                        if (newQuestion.text && newQuestion.options.every(o => o)) {
-                            newQuestions.push(newQuestion);
-                        }
-                    });
-
-                    questionsDatabase = [...questionsDatabase, ...newQuestions];
-                    downloadQuestionsAsJS(questionsDatabase);
-                    alert(`${newQuestions.length} soru başarıyla içe aktarıldı!\nOtomatik olarak JS dosyası indirildi.`);
-                    setCurrentPage('menu');
-                };
-                reader.readAsBinaryString(file);
-            };
-
-            const downloadQuestionsAsJS = (questions) => {
-                const jsContent = `// Soru Veri Tabanı - Otomatik oluşturuldu\nexport const questionsDatabase = ${JSON.stringify(questions, null, 2)};`;
-                
-                const blob = new Blob([jsContent], { type: 'text/javascript' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = 'questions_database.js';
-                link.click();
-                URL.revokeObjectURL(url);
-            };
-
-            const downloadQuestionsAsExcel = () => {
-                const data = questionsDatabase.map(q => ({
-                    'Soru Metni': q.text,
-                    'Kategori': q.category,
-                    'Alt Kategori': q.subcategory,
-                    'Zorluk': q.difficulty,
-                    'Seçenek A': q.options[0],
-                    'Seçenek B': q.options[1],
-                    'Seçenek C': q.options[2],
-                    'Seçenek D': q.options[3],
-                    'Doğru Cevap': q.correctAnswer,
-                    'Açıklama': q.explanation
-                }));
-
-                const worksheet = XLSX.utils.json_to_sheet(data);
-                const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, 'Sorular');
-                XLSX.writeFile(workbook, 'sorular.xlsx');
-            };
-
-            const results = examFinished ? calculateResults() : null;
-
-            const styles = {
-                container: {
-                    minHeight: '100vh',
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-                    padding: '20px',
-                    color: '#333'
-                },
-                page: {
-                    maxWidth: '900px',
-                    margin: '0 auto',
-                    animation: 'slideIn 0.3s ease-out'
-                },
-                header: {
-                    textAlign: 'center',
-                    color: 'white',
-                    marginBottom: '40px',
-                    paddingTop: '20px'
-                },
-                title: {
-                    fontSize: '48px',
-                    margin: '0 0 10px 0',
-                    fontWeight: 'bold',
-                    textShadow: '0 2px 10px rgba(0,0,0,0.2)'
-                },
-                subtitle: {
-                    fontSize: '16px',
-                    margin: 0,
-                    opacity: 0.9
-                },
-                content: {
-                    backgroundColor: 'white',
-                    borderRadius: '20px',
-                    padding: '40px',
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-                    animation: 'fadeIn 0.4s ease-out'
-                },
-                selectionGroup: {
-                    marginBottom: '35px',
-                    paddingBottom: '35px',
-                    borderBottom: '2px solid #f0f0f0'
-                },
-                groupTitle: {
-                    fontSize: '18px',
-                    fontWeight: '600',
-                    color: '#667eea',
-                    marginTop: 0,
-                    marginBottom: '15px'
-                },
-                optionsGrid: {
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                    gap: '12px'
-                },
-                optionButton: {
-                    padding: '12px 16px',
-                    border: '2px solid #e0e0e0',
-                    borderRadius: '10px',
-                    backgroundColor: 'white',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    transition: 'all 0.2s ease',
-                    color: '#555'
-                },
-                optionButtonActive: {
-                    backgroundColor: '#667eea',
-                    color: 'white',
-                    borderColor: '#667eea',
-                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)'
-                },
-                buttonGroup: {
-                    display: 'flex',
-                    gap: '12px',
-                    flexWrap: 'wrap',
-                    justifyContent: 'center'
-                },
-                primaryButton: {
-                    padding: '14px 32px',
-                    backgroundColor: '#667eea',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '10px',
-                    fontSize: '16px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)',
-                    marginTop: '20px'
-                },
-                secondaryButton: {
-                    padding: '10px 20px',
-                    backgroundColor: '#f0f0f0',
-                    color: '#333',
-                    border: '2px solid #ddd',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                },
-                fileInputLabel: {
-                    padding: '10px 20px',
-                    backgroundColor: '#10b981',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                },
-                managementSection: {
-                    marginTop: '40px',
-                    paddingTop: '30px',
-                    borderTop: '2px solid #f0f0f0'
-                },
-                examHeader: {
-                    backgroundColor: 'white',
-                    borderRadius: '15px',
-                    padding: '20px',
-                    marginBottom: '25px',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
-                },
-                examProgress: {
-                    flex: 1
-                },
-                progressBar: {
-                    height: '8px',
-                    backgroundColor: '#e0e0e0',
-                    borderRadius: '10px',
-                    marginTop: '8px',
-                    overflow: 'hidden'
-                },
-                progressFill: {
-                    height: '100%',
-                    backgroundColor: '#10b981',
-                    transition: 'width 0.3s ease'
-                },
-                exitButton: {
-                    backgroundColor: '#ef4444',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '8px 16px',
-                    cursor: 'pointer',
-                    fontSize: '16px',
-                    fontWeight: '600'
-                },
-                examContent: {
-                    backgroundColor: 'white',
-                    borderRadius: '15px',
-                    padding: '40px',
-                    boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
-                },
-                questionCard: {
-                    animation: 'slideUp 0.3s ease-out'
-                },
-                questionText: {
-                    fontSize: '22px',
-                    color: '#333',
-                    marginTop: 0,
-                    marginBottom: '30px',
-                    lineHeight: '1.6'
-                },
-                optionsContainer: {
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '12px',
-                    marginBottom: '30px'
-                },
-                answerButton: {
-                    padding: '16px',
-                    border: '2px solid #e0e0e0',
-                    borderRadius: '10px',
-                    backgroundColor: 'white',
-                    cursor: 'pointer',
-                    fontSize: '15px',
-                    textAlign: 'left',
-                    transition: 'all 0.2s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '12px'
-                },
-                answerButtonSelected: {
-                    backgroundColor: '#667eea',
-                    color: 'white',
-                    borderColor: '#667eea',
-                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.4)'
-                },
-                answerLabel: {
-                    fontWeight: '600',
-                    minWidth: '30px'
-                },
-                examButtonGroup: {
-                    display: 'flex',
-                    gap: '12px',
-                    justifyContent: 'center'
-                },
-                navigationButton: {
-                    padding: '12px 24px',
-                    backgroundColor: '#667eea',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    transition: 'all 0.2s ease'
-                },
-                finishButton: {
-                    backgroundColor: '#10b981'
-                },
-                resultsHeader: {
-                    textAlign: 'center',
-                    color: 'white',
-                    marginBottom: '30px'
-                },
-                resultsTitle: {
-                    fontSize: '42px',
-                    margin: '0 0 25px 0',
-                    textShadow: '0 2px 10px rgba(0,0,0,0.2)'
-                },
-                scoreBoard: {
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: '20px',
-                    maxWidth: '500px',
-                    margin: '0 auto'
-                },
-                scoreItem: {
-                    backgroundColor: 'rgba(255,255,255,0.1)',
-                    padding: '20px',
-                    borderRadius: '15px',
-                    backdropFilter: 'blur(10px)'
-                },
-                scoreNumber: {
-                    fontSize: '36px',
-                    fontWeight: 'bold',
-                    color: '#10b981'
-                },
-                scorePercent: {
-                    fontSize: '32px',
-                    fontWeight: 'bold',
-                    color: '#60a5fa'
-                },
-                scoreLabel: {
-                    fontSize: '12px',
-                    color: 'rgba(255,255,255,0.8)',
-                    marginTop: '8px',
-                    textTransform: 'uppercase'
-                },
-                resultsContent: {
-                    backgroundColor: 'white',
-                    borderRadius: '20px',
-                    padding: '40px',
-                    boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-                    animation: 'fadeIn 0.4s ease-out'
-                },
-                wrongsTitle: {
-                    fontSize: '20px',
-                    color: '#333',
-                    marginTop: 0,
-                    marginBottom: '25px'
-                },
-                noWrongs: {
-                    textAlign: 'center',
-                    padding: '40px',
-                    backgroundColor: '#f0fdf4',
-                    borderRadius: '12px',
-                    color: '#10b981',
-                    fontSize: '18px',
-                    fontWeight: '600'
-                },
-                wrongsList: {
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '20px',
-                    marginBottom: '30px'
-                },
-                wrongItem: {
-                    padding: '20px',
-                    backgroundColor: '#fef2f2',
-                    borderLeft: '4px solid #ef4444',
-                    borderRadius: '8px'
-                },
-                wrongQuestion: {
-                    margin: '0 0 15px 0',
-                    color: '#333',
-                    fontSize: '16px'
-                },
-                wrongDetail: {
-                    display: 'flex',
-                    gap: '10px',
-                    marginBottom: '10px',
-                    fontSize: '14px'
-                },
-                wrongLabel: {
-                    fontWeight: '600',
-                    color: '#666'
-                },
-                wrongValue: {
-                    color: '#ef4444',
-                    fontStyle: 'italic'
-                },
-                correctValue: {
-                    color: '#10b981',
-                    fontWeight: '600'
-                },
-                explanation: {
-                    marginTop: '15px',
-                    padding: '12px',
-                    backgroundColor: 'rgba(0,0,0,0.05)',
-                    borderRadius: '6px',
-                    fontSize: '13px',
-                    color: '#555',
-                    lineHeight: '1.5'
-                }
-            };
-
-            return (
-                <div style={styles.container}>
-                    {currentPage === 'menu' && (
-                        <div style={styles.page}>
-                            <div style={styles.header}>
-                                <h1 style={styles.title}>📚 Sınav Sistemi</h1>
-                                <p style={styles.subtitle}>Toplam {questionsDatabase.length} soru</p>
-                            </div>
-
-                            <div style={styles.content}>
-                                <div style={styles.selectionGroup}>
-                                    <h3 style={styles.groupTitle}>1. Kategori Seçin</h3>
-                                    <div style={styles.optionsGrid}>
-                                        {getCategories().map(cat => (
-                                            <button
-                                                key={cat}
-                                                style={{
-                                                    ...styles.optionButton,
-                                                    ...(selectedCategory === cat ? styles.optionButtonActive : {})
-                                                }}
-                                                onClick={() => {
-                                                    setSelectedCategory(selectedCategory === cat ? null : cat);
-                                                    setSelectedSubcategory(null);
-                                                }}
-                                            >
-                                                {cat}
-                                            </button>
-                                        ))}
+function QuestionModal({ question, onSave, onClose }) {
+    const [form, setForm] = useState(question ? {...question, options:[...question.options]} : blankQ());
+    const set = (k, v) => setForm(f => ({...f, [k]:v}));
+    const setOpt = (i, v) => setForm(f => { const o=[...f.options]; o[i]=v; return {...f, options:o}; });
+    const valid = form.text.trim() && form.category.trim() && form.options.every(o => o.trim());
+    return (
+        <div className="modal-overlay" onClick={e => e.target===e.currentTarget && onClose()}>
+            <div className="modal">
+                <div className="modal-header">
+                    <span className="modal-title">{question ? '✏️ Soru Düzenle' : '➕ Yeni Soru Ekle'}</span>
+                    <button className="modal-close" onClick={onClose}>✕</button>
+                </div>
+                <div className="modal-body">
+                    <div className="form-grid">
+                        <div className="form-full">
+                            <div className="form-label">Soru Metni *</div>
+                            <textarea className="mfi" rows={3} value={form.text} onChange={e=>set('text',e.target.value)} placeholder="Soruyu buraya yazın..." style={{resize:'vertical'}} />
+                        </div>
+                        <div>
+                            <div className="form-label">Kategori *</div>
+                            <input className="mfi" value={form.category} onChange={e=>set('category',e.target.value)} placeholder="ör: Matematik" />
+                        </div>
+                        <div>
+                            <div className="form-label">Alt Kategori</div>
+                            <input className="mfi" value={form.subcategory} onChange={e=>set('subcategory',e.target.value)} placeholder="ör: Geometri" />
+                        </div>
+                        <div>
+                            <div className="form-label">Zorluk</div>
+                            <select className="mfi" value={form.difficulty} onChange={e=>set('difficulty',e.target.value)}>
+                                {DIFFICULTIES.map(d=><option key={d}>{d}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <div className="form-label">Doğru Cevap</div>
+                            <select className="mfi" value={form.correctAnswer} onChange={e=>set('correctAnswer',parseInt(e.target.value))}>
+                                {['A','B','C','D'].map((l,i)=><option key={i} value={i}>{l} Şıkkı</option>)}
+                            </select>
+                        </div>
+                        <div className="form-full">
+                            <div className="form-label">Şıklar *</div>
+                            <div className="options-grid">
+                                {['A','B','C','D'].map((l,i)=>(
+                                    <div key={i} className="option-row">
+                                        <div className={`option-label ${form.correctAnswer===i?'correct':''}`}>{l}</div>
+                                        <input className="mfi" value={form.options[i]} onChange={e=>setOpt(i,e.target.value)} placeholder={`${l} şıkkı`} style={{flex:1}} />
                                     </div>
-                                </div>
-
-                                {selectedCategory && (
-                                    <div style={styles.selectionGroup}>
-                                        <h3 style={styles.groupTitle}>2. Alt Kategori Seçin</h3>
-                                        <div style={styles.optionsGrid}>
-                                            {getSubcategories(selectedCategory).map(subcat => (
-                                                <button
-                                                    key={subcat}
-                                                    style={{
-                                                        ...styles.optionButton,
-                                                        ...(selectedSubcategory === subcat ? styles.optionButtonActive : {})
-                                                    }}
-                                                    onClick={() => setSelectedSubcategory(selectedSubcategory === subcat ? null : subcat)}
-                                                >
-                                                    {subcat}
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div style={styles.selectionGroup}>
-                                    <h3 style={styles.groupTitle}>3. Zorluk Seviyesi Seçin</h3>
-                                    <div style={styles.optionsGrid}>
-                                        {getDifficulties().map(diff => (
-                                            <button
-                                                key={diff}
-                                                style={{
-                                                    ...styles.optionButton,
-                                                    ...(selectedDifficulty === diff ? styles.optionButtonActive : {})
-                                                }}
-                                                onClick={() => setSelectedDifficulty(selectedDifficulty === diff ? null : diff)}
-                                            >
-                                                {diff}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                <div style={styles.selectionGroup}>
-                                    <h3 style={styles.groupTitle}>4. Soru Sayısı Seçin</h3>
-                                    <div style={styles.optionsGrid}>
-                                        {[10, 20, 50, 100].map(count => (
-                                            <button
-                                                key={count}
-                                                style={{
-                                                    ...styles.optionButton,
-                                                    ...(questionCount === count ? styles.optionButtonActive : {})
-                                                }}
-                                                onClick={() => setQuestionCount(questionCount === count ? null : count)}
-                                            >
-                                                {count}
-                                            </button>
-                                        ))}
-                                        <button
-                                            style={{
-                                                ...styles.optionButton,
-                                                ...(questionCount === 'unlimited' ? styles.optionButtonActive : {})
-                                            }}
-                                            onClick={() => setQuestionCount(questionCount === 'unlimited' ? null : 'unlimited')}
-                                        >
-                                            Sınırsız
-                                        </button>
-                                    </div>
-                                </div>
-
-                                <div style={styles.buttonGroup}>
-                                    <button
-                                        style={{...styles.primaryButton, opacity: questionCount ? 1 : 0.5}}
-                                        onClick={startExam}
-                                        disabled={!questionCount}
-                                    >
-                                        🚀 Sınavı Başlat
-                                    </button>
-                                </div>
-
-                                <div style={styles.managementSection}>
-                                    <h3 style={styles.groupTitle}>📊 Soru Yönetimi</h3>
-                                    <div style={styles.buttonGroup}>
-                                        <label style={styles.fileInputLabel}>
-                                            📥 Excel'den İçe Aktar
-                                            <input
-                                                type="file"
-                                                accept=".xlsx,.xls"
-                                                onChange={(e) => e.target.files[0] && handleExcelImport(e.target.files[0])}
-                                                style={{display: 'none'}}
-                                            />
-                                        </label>
-                                        <button
-                                            style={styles.secondaryButton}
-                                            onClick={downloadQuestionsAsExcel}
-                                        >
-                                            📤 Excel'e Aktar
-                                        </button>
-                                        <button
-                                            style={styles.secondaryButton}
-                                            onClick={() => downloadQuestionsAsJS(questionsDatabase)}
-                                        >
-                                            💾 JS Dosyası İndir
-                                        </button>
-                                    </div>
-                                </div>
+                                ))}
                             </div>
                         </div>
-                    )}
-
-                    {currentPage === 'exam' && !examFinished && (
-                        <div style={styles.page}>
-                            <div style={styles.examHeader}>
-                                <div style={styles.examProgress}>
-                                    <span>Soru {currentQuestion + 1} / {examQuestions.length}</span>
-                                    <div style={styles.progressBar}>
-                                        <div
-                                            style={{
-                                                ...styles.progressFill,
-                                                width: `${((currentQuestion + 1) / examQuestions.length) * 100}%`
-                                            }}
-                                        />
-                                    </div>
-                                </div>
-                                <button
-                                    style={styles.exitButton}
-                                    onClick={() => {
-                                        if (confirm('Sınavı sonlandırmak istediğinize emin misiniz?')) {
-                                            setCurrentPage('menu');
-                                        }
-                                    }}
-                                >
-                                    ✕ Çık
-                                </button>
-                            </div>
-
-                            <div style={styles.examContent}>
-                                <div style={styles.questionCard}>
-                                    <h2 style={styles.questionText}>
-                                        {examQuestions[currentQuestion].text}
-                                    </h2>
-                                    
-                                    <div style={styles.optionsContainer}>
-                                        {examQuestions[currentQuestion].options.map((option, idx) => (
-                                            <button
-                                                key={idx}
-                                                style={{
-                                                    ...styles.answerButton,
-                                                    ...(userAnswers[currentQuestion] === idx ? styles.answerButtonSelected : {})
-                                                }}
-                                                onClick={() => handleAnswer(idx)}
-                                            >
-                                                <span style={styles.answerLabel}>{String.fromCharCode(65 + idx)})</span>
-                                                {option}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    <div style={styles.examButtonGroup}>
-                                        <button
-                                            style={{...styles.navigationButton, opacity: currentQuestion > 0 ? 1 : 0.5}}
-                                            onClick={goPrevQuestion}
-                                            disabled={currentQuestion === 0}
-                                        >
-                                            ← Önceki
-                                        </button>
-                                        
-                                        {currentQuestion < examQuestions.length - 1 ? (
-                                            <button
-                                                style={styles.navigationButton}
-                                                onClick={goNextQuestion}
-                                            >
-                                                Sonraki →
-                                            </button>
-                                        ) : (
-                                            <button
-                                                style={{...styles.navigationButton, ...styles.finishButton}}
-                                                onClick={finishExam}
-                                            >
-                                                Sınavı Bitir ✓
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="form-full">
+                            <div className="form-label">Açıklama (opsiyonel)</div>
+                            <textarea className="mfi" rows={2} value={form.explanation} onChange={e=>set('explanation',e.target.value)} placeholder="Doğru cevabın açıklaması..." style={{resize:'vertical'}} />
                         </div>
-                    )}
+                    </div>
+                </div>
+                <div className="modal-footer">
+                    <button className="btn btn-ghost" onClick={onClose}>İptal</button>
+                    <button className="btn btn-primary" onClick={()=>valid&&onSave(form)} style={{opacity:valid?1:0.5}}>
+                        {question ? '💾 Kaydet' : '➕ Ekle'}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
 
-                    {currentPage === 'results' && results && (
-                        <div style={styles.page}>
-                            <div style={styles.resultsHeader}>
-                                <h1 style={styles.resultsTitle}>✓ Sınav Tamamlandı</h1>
-                                <div style={styles.scoreBoard}>
-                                    <div style={styles.scoreItem}>
-                                        <div style={styles.scoreNumber}>{results.correct}</div>
-                                        <div style={styles.scoreLabel}>Doğru</div>
-                                    </div>
-                                    <div style={styles.scoreItem}>
-                                        <div style={{...styles.scoreNumber, color: '#ef4444'}}>{results.wrong.length}</div>
-                                        <div style={styles.scoreLabel}>Yanlış</div>
-                                    </div>
-                                    <div style={styles.scoreItem}>
-                                        <div style={styles.scorePercent}>
-                                            {Math.round((results.correct / results.total) * 100)}%
-                                        </div>
-                                        <div style={styles.scoreLabel}>Başarı</div>
-                                    </div>
-                                </div>
-                            </div>
+function QuestionManager({ questions, setQuestions, showToast }) {
+    const [search, setSearch] = useState('');
+    const [catF, setCatF] = useState('');
+    const [diffF, setDiffF] = useState('');
+    const [modal, setModal] = useState(null);
+    const [delConfirm, setDelConfirm] = useState(null);
+    const [page, setPage] = useState(1);
+    const PER = 15;
+    const importRef = useRef();
+    const cats = [...new Set(questions.map(q=>q.category))].sort();
 
-                            <div style={styles.resultsContent}>
-                                <h3 style={styles.wrongsTitle}>❌ Yanlış Cevaplar</h3>
-                                {results.wrong.length === 0 ? (
-                                    <div style={styles.noWrongs}>Tüm sorulara doğru cevap verdiniz! 🎉</div>
-                                ) : (
-                                    <div style={styles.wrongsList}>
-                                        {results.wrong.map((item, idx) => (
-                                            <div key={idx} style={styles.wrongItem}>
-                                                <h4 style={styles.wrongQuestion}>{item.question.text}</h4>
-                                                <div style={styles.wrongDetail}>
-                                                    <span style={styles.wrongLabel}>Sizin cevabınız:</span>
-                                                    <span style={styles.wrongValue}>{item.userAnswer}</span>
-                                                </div>
-                                                <div style={styles.wrongDetail}>
-                                                    <span style={styles.wrongLabel}>Doğru cevap:</span>
-                                                    <span style={styles.correctValue}>{item.correctAnswer}</span>
-                                                </div>
-                                                {item.question.explanation && (
-                                                    <div style={styles.explanation}>
-                                                        <strong>💡 Açıklama:</strong> {item.question.explanation}
-                                                    </div>
-                                                )}
+    const filtered = questions.filter(q => {
+        const s = search.toLowerCase();
+        return (!s || q.text.toLowerCase().includes(s) || q.category.toLowerCase().includes(s) || q.subcategory.toLowerCase().includes(s))
+            && (!catF || q.category===catF)
+            && (!diffF || q.difficulty===diffF);
+    });
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length/PER));
+    const paged = filtered.slice((page-1)*PER, page*PER);
+    const rp = () => setPage(1);
+
+    const save = (form) => {
+        if (modal==='add') {
+            const nq = {...form, id:Date.now()};
+            setQuestions(prev => { const next=[...prev,nq]; ss('exam_q',next); return next; });
+            showToast('Soru eklendi','success');
+        } else {
+            setQuestions(prev => { const next=prev.map(q=>q.id===modal.id?{...form,id:modal.id}:q); ss('exam_q',next); return next; });
+            showToast('Soru güncellendi','success');
+        }
+        setModal(null);
+    };
+
+    const del = (id) => {
+        setQuestions(prev => { const next=prev.filter(q=>q.id!==id); ss('exam_q',next); return next; });
+        setDelConfirm(null);
+        showToast('Soru silindi','error');
+    };
+
+    const delAll = () => {
+        if (confirm(`Tüm ${questions.length} soru silinecek! Emin misiniz?`)) {
+            setQuestions([]); ss('exam_q',[]);
+            showToast('Tüm sorular silindi','error');
+        }
+    };
+
+    const exportExcel = () => {
+        const data = questions.map(q => ({'Soru Metni':q.text,'Kategori':q.category,'Alt Kategori':q.subcategory,'Zorluk':q.difficulty,'Seçenek A':q.options[0],'Seçenek B':q.options[1],'Seçenek C':q.options[2],'Seçenek D':q.options[3],'Doğru Cevap (0-3)':q.correctAnswer,'Açıklama':q.explanation}));
+        const ws=XLSX.utils.json_to_sheet(data); const wb=XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb,ws,'Sorular'); XLSX.writeFile(wb,`sorular_${new Date().toISOString().slice(0,10)}.xlsx`);
+        showToast(`${questions.length} soru aktarıldı`,'success');
+    };
+
+    const exportTemplate = () => {
+        const data=[{'Soru Metni':'Örnek soru?','Kategori':'Matematik','Alt Kategori':'Geometri','Zorluk':'Orta','Seçenek A':'Cevap 1','Seçenek B':'Cevap 2','Seçenek C':'Cevap 3','Seçenek D':'Cevap 4','Doğru Cevap (0-3)':1,'Açıklama':'Açıklama metni'}];
+        const ws=XLSX.utils.json_to_sheet(data); const wb=XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb,ws,'Şablon'); XLSX.writeFile(wb,'soru_sablonu.xlsx');
+        showToast('Şablon indirildi','info');
+    };
+
+    const exportJSON = () => {
+        const blob=new Blob([JSON.stringify(questions,null,2)],{type:'application/json'});
+        const url=URL.createObjectURL(blob); const a=document.createElement('a');
+        a.href=url; a.download='sorular.json'; a.click(); URL.revokeObjectURL(url);
+        showToast('JSON aktarıldı','success');
+    };
+
+    const importFile = (file) => {
+        const reader=new FileReader();
+        reader.onload=e=>{
+            try {
+                const wb=XLSX.read(e.target.result,{type:'binary'});
+                const ws=wb.Sheets[wb.SheetNames[0]];
+                const rows=XLSX.utils.sheet_to_json(ws);
+                let cnt=0; const nqs=[];
+                rows.forEach(row=>{
+                    const q={id:Date.now()+Math.random(),text:row['Soru Metni']||'',category:row['Kategori']||'Diğer',subcategory:row['Alt Kategori']||'Genel',difficulty:row['Zorluk']||'Orta',options:[row['Seçenek A']||'',row['Seçenek B']||'',row['Seçenek C']||'',row['Seçenek D']||''],correctAnswer:parseInt(row['Doğru Cevap (0-3)'])||0,explanation:row['Açıklama']||''};
+                    if(q.text&&q.options.every(o=>o)){nqs.push(q);cnt++;}
+                });
+                setQuestions(prev=>{const next=[...prev,...nqs];ss('exam_q',next);return next;});
+                showToast(`${cnt} soru içe aktarıldı`,'success');
+            } catch { showToast('Dosya okunamadı','error'); }
+        };
+        reader.readAsBinaryString(file);
+        if(importRef.current) importRef.current.value='';
+    };
+
+    const byDiff = DIFFICULTIES.map(d=>({d,n:questions.filter(q=>q.difficulty===d).length}));
+
+    return (
+        <div>
+            <div className="stats-grid">
+                <div className="stat-card"><div className="stat-icon" style={{background:'#dbeafe'}}>📚</div><div><div className="stat-value">{questions.length}</div><div className="stat-label">Toplam Soru</div></div></div>
+                <div className="stat-card"><div className="stat-icon" style={{background:'#dcfce7'}}>📂</div><div><div className="stat-value">{cats.length}</div><div className="stat-label">Kategori</div></div></div>
+                {byDiff.map(({d,n})=>(
+                    <div className="stat-card" key={d}>
+                        <div className="stat-icon" style={{background:d==='Kolay'?'#dcfce7':d==='Orta'?'#fef3c7':'#fee2e2'}}>{d==='Kolay'?'🟢':d==='Orta'?'🟡':'🔴'}</div>
+                        <div><div className="stat-value">{n}</div><div className="stat-label">{d}</div></div>
+                    </div>
+                ))}
+            </div>
+
+            <div className="table-container">
+                <div className="table-toolbar">
+                    <div className="search-wrap">
+                        <span className="search-icon">🔍</span>
+                        <input className="search-input" placeholder="Soru ara..." value={search} onChange={e=>{setSearch(e.target.value);rp();}} />
+                    </div>
+                    <select className="filter-select" value={catF} onChange={e=>{setCatF(e.target.value);rp();}}>
+                        <option value="">Tüm Kategoriler</option>
+                        {cats.map(c=><option key={c}>{c}</option>)}
+                    </select>
+                    <select className="filter-select" value={diffF} onChange={e=>{setDiffF(e.target.value);rp();}}>
+                        <option value="">Tüm Zorluklar</option>
+                        {DIFFICULTIES.map(d=><option key={d}>{d}</option>)}
+                    </select>
+                    <div style={{marginLeft:'auto',display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                        <button className="btn btn-primary btn-sm" onClick={()=>setModal('add')}>➕ Soru Ekle</button>
+                        <button className="btn btn-success btn-sm" onClick={exportExcel}>📤 Excel Aktar</button>
+                        <label className="btn btn-ghost btn-sm" style={{cursor:'pointer'}}>
+                            📥 Excel İçe Al
+                            <input ref={importRef} type="file" accept=".xlsx,.xls" style={{display:'none'}} onChange={e=>e.target.files[0]&&importFile(e.target.files[0])} />
+                        </label>
+                        <button className="btn btn-ghost btn-sm" onClick={exportTemplate}>📋 Şablon İndir</button>
+                        <button className="btn btn-ghost btn-sm" onClick={exportJSON}>📄 JSON Aktar</button>
+                        <button className="btn btn-danger btn-sm" onClick={delAll}>🗑 Tümünü Sil</button>
+                    </div>
+                </div>
+
+                {paged.length===0 ? (
+                    <div className="empty-state">
+                        <div style={{fontSize:40,marginBottom:12}}>📭</div>
+                        <div style={{fontSize:15,fontWeight:500}}>{search||catF||diffF?'Aramanıza uygun soru bulunamadı.':'Henüz soru eklenmemiş.'}</div>
+                    </div>
+                ) : (
+                    <div style={{overflowX:'auto'}}>
+                        <table className="data-table">
+                            <thead>
+                                <tr>
+                                    <th style={{width:40}}>#</th>
+                                    <th>Soru</th>
+                                    <th>Kategori</th>
+                                    <th>Alt Kategori</th>
+                                    <th>Zorluk</th>
+                                    <th>Doğru</th>
+                                    <th style={{width:90}}>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {paged.map((q,idx)=>(
+                                    <tr key={q.id}>
+                                        <td style={{color:'var(--gray-400)',fontFamily:'IBM Plex Mono',fontSize:12}}>{(page-1)*PER+idx+1}</td>
+                                        <td><div className="q-text" title={q.text}>{q.text}</div></td>
+                                        <td><span className="badge badge-blue">{q.category}</span></td>
+                                        <td><span className="badge badge-gray">{q.subcategory}</span></td>
+                                        <td><span className={`badge ${diffBadge(q.difficulty)}`}>{q.difficulty}</span></td>
+                                        <td><span style={{fontFamily:'IBM Plex Mono',fontWeight:700,color:'var(--success)'}}>{String.fromCharCode(65+q.correctAnswer)}</span></td>
+                                        <td>
+                                            <div className="action-btns">
+                                                <button className="btn-icon primary" title="Düzenle" onClick={()=>setModal(q)}>✏️</button>
+                                                <button className="btn-icon danger" title="Sil" onClick={()=>setDelConfirm(q)}>🗑</button>
                                             </div>
-                                        ))}
-                                    </div>
-                                )}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
 
-                                <div style={styles.buttonGroup}>
-                                    <button
-                                        style={styles.primaryButton}
-                                        onClick={() => setCurrentPage('menu')}
-                                    >
-                                        🏠 Ana Menüye Dön
-                                    </button>
-                                </div>
-                            </div>
+                {totalPages>1 && (
+                    <div className="pagination">
+                        <div className="pagination-info">{filtered.length} sonuçtan {(page-1)*PER+1}–{Math.min(page*PER,filtered.length)} arası</div>
+                        <div className="pagination-btns">
+                            <button className="page-btn" disabled={page===1} onClick={()=>setPage(p=>p-1)}>‹</button>
+                            {Array.from({length:Math.min(totalPages,7)},(_,i)=>{
+                                let p=i+1;
+                                if(totalPages>7){if(page<=4)p=i+1;else if(page>=totalPages-3)p=totalPages-6+i;else p=page-3+i;}
+                                return <button key={p} className={`page-btn ${page===p?'current':''}`} onClick={()=>setPage(p)}>{p}</button>;
+                            })}
+                            <button className="page-btn" disabled={page===totalPages} onClick={()=>setPage(p=>p+1)}>›</button>
                         </div>
+                    </div>
+                )}
+            </div>
+
+            {(modal==='add'||(modal&&modal.id)) && <QuestionModal question={modal==='add'?null:modal} onSave={save} onClose={()=>setModal(null)} />}
+
+            {delConfirm && (
+                <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setDelConfirm(null)}>
+                    <div className="modal" style={{maxWidth:400}}>
+                        <div className="modal-header"><span className="modal-title">⚠️ Soru Sil</span><button className="modal-close" onClick={()=>setDelConfirm(null)}>✕</button></div>
+                        <div className="modal-body">
+                            <p style={{color:'var(--gray-600)'}}>Bu soru silinecek:</p>
+                            <p style={{marginTop:10,padding:'12px',background:'var(--gray-50)',borderRadius:8,fontSize:14}}>{delConfirm.text}</p>
+                            <p style={{marginTop:10,color:'var(--danger)',fontSize:13}}>Bu işlem geri alınamaz.</p>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn btn-ghost" onClick={()=>setDelConfirm(null)}>İptal</button>
+                            <button className="btn btn-danger" onClick={()=>del(delConfirm.id)}>Evet, Sil</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+function ExamMenu({ questions, onStart }) {
+    const [cat, setCat] = useState(null);
+    const [sub, setSub] = useState(null);
+    const [diff, setDiff] = useState(null);
+    const [count, setCount] = useState(null);
+    const cats = [...new Set(questions.map(q=>q.category))];
+    const subs = cat ? [...new Set(questions.filter(q=>q.category===cat).map(q=>q.subcategory))] : [];
+    const diffs = [...new Set(questions.map(q=>q.difficulty))];
+    const filtered = questions.filter(q=>(!cat||q.category===cat)&&(!sub||q.subcategory===sub)&&(!diff||q.difficulty===diff));
+    const canStart = count && filtered.length>0;
+    return (
+        <div className="menu-wrap">
+            <div className="topbar"><div><div className="topbar-title">🚀 Sınava Başla</div><div className="topbar-subtitle">{filtered.length} uygun soru mevcut</div></div></div>
+            <div className="page-body">
+                <div className="section-card">
+                    <div className="section-card-title">📂 1. Kategori <span style={{color:'var(--gray-400)',fontWeight:400}}>(opsiyonel)</span></div>
+                    <div className="chip-grid">
+                        {cats.map(c=><button key={c} className={`chip ${cat===c?'active':''}`} onClick={()=>{setCat(cat===c?null:c);setSub(null);}}>{c}</button>)}
+                    </div>
+                </div>
+                {cat&&subs.length>1&&(
+                    <div className="section-card">
+                        <div className="section-card-title">📁 2. Alt Kategori <span style={{color:'var(--gray-400)',fontWeight:400}}>(opsiyonel)</span></div>
+                        <div className="chip-grid">{subs.map(s=><button key={s} className={`chip ${sub===s?'active':''}`} onClick={()=>setSub(sub===s?null:s)}>{s}</button>)}</div>
+                    </div>
+                )}
+                <div className="section-card">
+                    <div className="section-card-title">🎯 3. Zorluk <span style={{color:'var(--gray-400)',fontWeight:400}}>(opsiyonel)</span></div>
+                    <div className="chip-grid">{diffs.map(d=><button key={d} className={`chip ${diff===d?'active':''}`} onClick={()=>setDiff(diff===d?null:d)}>{d}</button>)}</div>
+                </div>
+                <div className="section-card">
+                    <div className="section-card-title">🔢 4. Soru Sayısı *</div>
+                    <div className="chip-grid">
+                        {[10,20,50,100].filter(n=>filtered.length>=n).map(n=>(
+                            <button key={n} className={`chip ${count===n?'active':''}`} onClick={()=>setCount(count===n?null:n)}>{n}</button>
+                        ))}
+                        <button className={`chip ${count==='all'?'active':''}`} onClick={()=>setCount(count==='all'?null:'all')}>Tümü ({filtered.length})</button>
+                    </div>
+                </div>
+                <div style={{textAlign:'center'}}>
+                    <button className="btn btn-primary" style={{padding:'14px 40px',fontSize:16,opacity:canStart?1:0.5}}
+                        onClick={()=>{if(!canStart)return;let qs=[...filtered];if(count!=='all')qs=qs.slice(0,count);onStart(qs);}}>
+                        🚀 Sınavı Başlat
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function ExamPage({ examQs, onFinish, onExit }) {
+    const [cur, setCur] = useState(0);
+    const [answers, setAnswers] = useState({});
+    const q = examQs[cur];
+    return (
+        <div className="exam-wrap">
+            <div className="exam-topbar">
+                <div style={{flex:1}}>
+                    <div style={{fontSize:13,color:'var(--gray-600)',marginBottom:6}}>Soru {cur+1} / {examQs.length}</div>
+                    <div className="progress-bar"><div className="progress-fill" style={{width:`${((cur+1)/examQs.length)*100}%`}} /></div>
+                </div>
+                <button className="btn btn-ghost btn-sm" style={{marginLeft:20}} onClick={()=>{if(confirm('Sınavdan çıkmak istediğinize emin misiniz?'))onExit();}}>✕ Çık</button>
+            </div>
+            <div className="exam-card">
+                <div className="question-num">Soru {cur+1}</div>
+                <div className="question-text">{q.text}</div>
+                <div className="answers">
+                    {q.options.map((opt,i)=>(
+                        <button key={i} className={`answer-btn ${answers[cur]===i?'selected':''}`} onClick={()=>setAnswers(a=>({...a,[cur]:i}))}>
+                            <div className="answer-letter">{String.fromCharCode(65+i)}</div>{opt}
+                        </button>
+                    ))}
+                </div>
+                <div className="exam-nav">
+                    <button className="btn btn-ghost" disabled={cur===0} onClick={()=>setCur(c=>c-1)}>← Önceki</button>
+                    {cur<examQs.length-1
+                        ?<button className="btn btn-primary" onClick={()=>setCur(c=>c+1)}>Sonraki →</button>
+                        :<button className="btn btn-success" onClick={()=>onFinish(answers)}>Sınavı Bitir ✓</button>
+                    }
+                </div>
+            </div>
+        </div>
+    );
+}
+
+function ResultsPage({ examQs, answers, onBack }) {
+    let correct=0, wrong=[];
+    examQs.forEach((q,i)=>{
+        if(answers[i]===q.correctAnswer)correct++;
+        else wrong.push({q,user:answers[i]!==undefined?q.options[answers[i]]:'Cevap verilmedi',correct:q.options[q.correctAnswer]});
+    });
+    const pct=Math.round((correct/examQs.length)*100);
+    return (
+        <div style={{maxWidth:860,margin:'0 auto',padding:'30px 20px'}}>
+            <div style={{textAlign:'center',paddingTop:20}}>
+                <h1 style={{fontSize:36,fontWeight:800,color:'var(--gray-900)'}}>✓ Sınav Tamamlandı</h1>
+                <div className="score-grid">
+                    <div className="score-box"><div className="score-num" style={{color:'var(--success)'}}>{correct}</div><div className="score-lbl">Doğru</div></div>
+                    <div className="score-box"><div className="score-num" style={{color:'var(--danger)'}}>{wrong.length}</div><div className="score-lbl">Yanlış</div></div>
+                    <div className="score-box"><div className="score-num" style={{color:'var(--primary)'}}>{pct}%</div><div className="score-lbl">Başarı</div></div>
+                </div>
+            </div>
+            <div className="section-card" style={{marginTop:24}}>
+                <div className="section-card-title">❌ Yanlış Cevaplar</div>
+                {wrong.length===0
+                    ?<div style={{textAlign:'center',padding:30,color:'var(--success)',fontWeight:600}}>🎉 Tüm sorulara doğru cevap verdiniz!</div>
+                    :wrong.map((w,i)=>(
+                        <div key={i} style={{padding:'16px',background:'var(--danger-light)',borderLeft:'4px solid var(--danger)',borderRadius:8,marginBottom:12}}>
+                            <p style={{fontWeight:600,marginBottom:10}}>{w.q.text}</p>
+                            <p style={{fontSize:13,color:'var(--danger)'}}>Cevabınız: {w.user}</p>
+                            <p style={{fontSize:13,color:'var(--success)',fontWeight:600}}>Doğru: {w.correct}</p>
+                            {w.q.explanation&&<p style={{fontSize:12,marginTop:8,color:'var(--gray-600)',background:'rgba(0,0,0,0.04)',padding:'8px',borderRadius:6}}>💡 {w.q.explanation}</p>}
+                        </div>
+                    ))
+                }
+            </div>
+            <div style={{textAlign:'center',marginTop:20}}>
+                <button className="btn btn-primary" style={{padding:'12px 32px'}} onClick={onBack}>🏠 Ana Menüye Dön</button>
+            </div>
+        </div>
+    );
+}
+
+function Login({ onLogin }) {
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const handle = () => {
+        const u = USERS.find(u=>u.username===username&&u.password===password);
+        if(u)onLogin(u); else setError('Kullanıcı adı veya şifre hatalı.');
+    };
+    return (
+        <div className="login-wrap">
+            <div className="login-card">
+                <div className="login-logo-icon">📚</div>
+                <div className="login-title">Sınav Sistemi</div>
+                <div className="login-subtitle">Soru yönetimine giriş yapın</div>
+                <div className="form-group">
+                    <label className="form-label">Kullanıcı Adı</label>
+                    <input className={`form-input ${error?'err':''}`} value={username} onChange={e=>{setUsername(e.target.value);setError('');}} onKeyDown={e=>e.key==='Enter'&&handle()} placeholder="admin" />
+                </div>
+                <div className="form-group">
+                    <label className="form-label">Şifre</label>
+                    <input className={`form-input ${error?'err':''}`} type="password" value={password} onChange={e=>{setPassword(e.target.value);setError('');}} onKeyDown={e=>e.key==='Enter'&&handle()} placeholder="••••••••" />
+                </div>
+                {error&&<div className="error-msg">⚠ {error}</div>}
+                <button className="btn-login" onClick={handle}>Giriş Yap →</button>
+                <div className="login-hint">Demo: <strong>admin</strong> / <strong>admin123</strong></div>
+            </div>
+        </div>
+    );
+}
+
+function App() {
+    const [user, setUser] = useState(()=>gs('exam_user',null));
+    const [questions, setQuestions] = useState(()=>gs('exam_q',DEFAULT_QUESTIONS));
+    const [page, setPage] = useState('menu');
+    const [examQs, setExamQs] = useState([]);
+    const [examAnswers, setExamAnswers] = useState({});
+    const [toast, setToast] = useState(null);
+    const [showLogin, setShowLogin] = useState(false);
+
+    const showToast = (msg,type='info') => setToast({msg,type,key:Date.now()});
+    const login = (u) => { setUser(u); ss('exam_user',u); setShowLogin(false); if(page!=='questions')setPage('questions'); };
+    const logout = () => { setUser(null); ss('exam_user',null); setPage('menu'); };
+
+    if(showLogin) return <>
+        <Login onLogin={login} />
+        <button onClick={()=>setShowLogin(false)} style={{position:'fixed',top:20,left:20,background:'rgba(255,255,255,0.15)',border:'none',color:'white',padding:'8px 14px',borderRadius:8,cursor:'pointer',fontSize:13}}>← Geri</button>
+    </>;
+
+    if(page==='exam') return (
+        <div style={{background:'var(--gray-50)',minHeight:'100vh'}}>
+            <ExamPage examQs={examQs} onFinish={(a)=>{setExamAnswers(a);setPage('results');}} onExit={()=>setPage('menu')} />
+            {toast&&<Toast key={toast.key} msg={toast.msg} type={toast.type} onDone={()=>setToast(null)} />}
+        </div>
+    );
+    if(page==='results') return (
+        <div style={{background:'var(--gray-50)',minHeight:'100vh'}}>
+            <ResultsPage examQs={examQs} answers={examAnswers} onBack={()=>setPage('menu')} />
+            {toast&&<Toast key={toast.key} msg={toast.msg} type={toast.type} onDone={()=>setToast(null)} />}
+        </div>
+    );
+
+    return (
+        <div className="app-shell">
+            <div className="sidebar">
+                <div className="sidebar-header">
+                    <div className="sidebar-brand">
+                        <div className="sidebar-brand-icon">📚</div>
+                        <div><div className="sidebar-brand-text">Sınav Sistemi</div><div className="sidebar-brand-sub">v2.0</div></div>
+                    </div>
+                </div>
+                <nav className="sidebar-nav">
+                    <div className="nav-section-label">Navigasyon</div>
+                    <button className={`nav-item ${page==='menu'?'active':''}`} onClick={()=>setPage('menu')}><span className="nav-item-icon">🏠</span>Sınav Başlat</button>
+                    {user && <button className={`nav-item ${page==='questions'?'active':''}`} onClick={()=>setPage('questions')}><span className="nav-item-icon">📋</span>Soru Yönetimi<span className="nav-badge">{questions.length}</span></button>}
+                    {!user && (
+                        <>
+                            <div className="nav-section-label" style={{marginTop:12}}>Yönetim</div>
+                            <button className="nav-item" onClick={()=>setShowLogin(true)}><span className="nav-item-icon">🔐</span>Soru Yönetimi</button>
+                        </>
+                    )}
+                </nav>
+                <div className="sidebar-footer">
+                    {user ? (
+                        <div className="user-badge">
+                            <div className="user-avatar">👤</div>
+                            <div><div className="user-name">{user.name}</div><div className="user-role">{user.role}</div></div>
+                            <button className="btn-logout" title="Çıkış" onClick={logout}>⏏</button>
+                        </div>
+                    ) : (
+                        <button className="nav-item" onClick={()=>setShowLogin(true)} style={{width:'100%',justifyContent:'center',background:'rgba(37,99,235,0.15)',color:'#93c5fd'}}>🔐 Giriş Yap</button>
                     )}
                 </div>
-            );
-        }
+            </div>
+            <div className="main-content">
+                {page==='menu' && <ExamMenu questions={questions} onStart={qs=>{setExamQs(qs);setPage('exam');}} />}
+                {page==='questions' && user && (
+                    <>
+                        <div className="topbar">
+                            <div><div className="topbar-title">📋 Soru Yönetimi</div><div className="topbar-subtitle">{questions.length} soru · {user.name}</div></div>
+                        </div>
+                        <div className="page-body">
+                            <QuestionManager questions={questions} setQuestions={setQuestions} showToast={showToast} />
+                        </div>
+                    </>
+                )}
+            </div>
+            {toast&&<Toast key={toast.key} msg={toast.msg} type={toast.type} onDone={()=>setToast(null)} />}
+        </div>
+    );
+}
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<ExamSystem />);
-    </script>
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
 </body>
 </html>
