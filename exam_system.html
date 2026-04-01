@@ -1,747 +1,1427 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sınav Sistemi - Soru Bankası</title>
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #dbeafe;
-            --success: #059669; --success-light: #d1fae5;
-            --danger: #dc2626; --danger-light: #fee2e2;
-            --warning: #d97706; --warning-light: #fef3c7;
-            --gray-50: #f8fafc; --gray-100: #f1f5f9; --gray-200: #e2e8f0;
-            --gray-300: #cbd5e1; --gray-400: #94a3b8; --gray-500: #64748b;
-            --gray-600: #475569; --gray-700: #334155; --gray-800: #1e293b; --gray-900: #0f172a;
-            --sidebar-w: 240px; --radius: 8px;
-        }
-        body { font-family: 'IBM Plex Sans', sans-serif; background: var(--gray-50); color: var(--gray-800); min-height: 100vh; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: var(--gray-100); }
-        ::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
-        #root { min-height: 100vh; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sınav Sistemi</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232563eb'/><text y='.9em' font-size='72' x='12'>📚</text></svg>">
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════
+   RESET & TOKENS
+════════════════════════════════════════════════ */
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --P:#2563eb;--PD:#1d4ed8;--PL:#dbeafe;
+  --S:#059669;--SL:#d1fae5;
+  --D:#dc2626;--DL:#fee2e2;
+  --W:#d97706;--WL:#fef3c7;
+  --V:#7c3aed;--VL:#ede9fe;
+  --g0:#f8fafc;--g1:#f1f5f9;--g2:#e2e8f0;--g3:#cbd5e1;
+  --g4:#94a3b8;--g5:#64748b;--g6:#475569;--g7:#334155;
+  --g8:#1e293b;--g9:#0f172a;
+  --sb:248px;--r:8px;
+}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--g0);color:var(--g8);min-height:100vh}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(5,150,105,.35)}50%{box-shadow:0 0 0 8px rgba(5,150,105,0)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.45}}
+@keyframes pop{0%{transform:scale(.92)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--g3);border-radius:3px}
+#root{min-height:100vh}
 
-        /* LOGIN */
-        .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #0f172a 100%); }
-        .login-card { background: white; border-radius: 16px; padding: 48px; width: 420px; max-width: 90vw; box-shadow: 0 25px 60px rgba(0,0,0,0.4); animation: fadeIn 0.4s ease; }
-        .login-logo-icon { width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary), #7c3aed); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; margin: 0 auto 16px; }
-        .login-title { font-size: 24px; font-weight: 700; color: var(--gray-900); text-align: center; }
-        .login-subtitle { font-size: 14px; color: var(--gray-500); margin-top: 4px; text-align: center; margin-bottom: 32px; }
-        .form-group { margin-bottom: 20px; }
-        .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--gray-700); margin-bottom: 6px; }
-        .form-input { width: 100%; padding: 10px 14px; border: 2px solid var(--gray-200); border-radius: var(--radius); font-size: 15px; font-family: inherit; transition: border-color 0.2s; background: var(--gray-50); color: var(--gray-800); }
-        .form-input:focus { outline: none; border-color: var(--primary); background: white; }
-        .form-input.err { border-color: var(--danger); }
-        .error-msg { font-size: 13px; color: var(--danger); margin-top: 6px; }
-        .btn-login { width: 100%; padding: 12px; background: linear-gradient(135deg, var(--primary), #7c3aed); color: white; border: none; border-radius: var(--radius); font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 8px; }
-        .login-hint { text-align: center; margin-top: 20px; font-size: 12px; color: var(--gray-400); padding: 12px; background: var(--gray-50); border-radius: var(--radius); border: 1px dashed var(--gray-200); }
+/* ════════════════════════════════════════════════
+   PROFILE / HOME
+════════════════════════════════════════════════ */
+.home{min-height:100vh;background:linear-gradient(135deg,var(--g9) 0%,#1e3a5f 60%,var(--g9) 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 20px}
+.home-logo{width:72px;height:72px;background:linear-gradient(135deg,var(--P),var(--V));border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:36px;margin-bottom:16px;animation:pop .4s ease}
+.home-title{font-size:30px;font-weight:700;color:white;margin-bottom:6px;text-align:center}
+.home-sub{font-size:14px;color:var(--g4);margin-bottom:40px;text-align:center}
+.profile-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;width:100%;max-width:700px;margin-bottom:32px}
+.prof-card{background:rgba(255,255,255,.07);border:2px solid rgba(255,255,255,.12);border-radius:16px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.prof-card:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.28);transform:translateY(-2px)}
+.prof-avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px;font-weight:700;color:white}
+.prof-name{font-size:14px;font-weight:600;color:white;word-break:break-word}
+.prof-stats{font-size:11px;color:var(--g4);margin-top:4px}
+.prof-del{position:absolute;top:8px;right:8px;background:rgba(220,38,38,.7);border:none;color:white;width:22px;height:22px;border-radius:50%;font-size:11px;cursor:pointer;display:none;align-items:center;justify-content:center;transition:all .15s}
+.prof-card:hover .prof-del{display:flex}
+.prof-del:hover{background:var(--D)}
+.prof-add{background:rgba(255,255,255,.04);border:2px dashed rgba(255,255,255,.2);border-radius:16px;padding:24px 16px;text-align:center;cursor:pointer;transition:all .2s;color:var(--g4)}
+.prof-add:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.35);color:white}
+.prof-add-ico{font-size:28px;margin-bottom:8px}
+.prof-add-lbl{font-size:13px;font-weight:500}
 
-        /* SHELL */
-        .app-shell { display: flex; min-height: 100vh; }
-        .sidebar { width: var(--sidebar-w); background: var(--gray-900); display: flex; flex-direction: column; position: fixed; top: 0; left: 0; height: 100vh; z-index: 100; }
-        .sidebar-header { padding: 20px 16px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .sidebar-brand { display: flex; align-items: center; gap: 10px; }
-        .sidebar-brand-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--primary), #7c3aed); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
-        .sidebar-brand-text { font-size: 15px; font-weight: 700; color: white; }
-        .sidebar-brand-sub { font-size: 11px; color: var(--gray-400); font-family: 'IBM Plex Mono', monospace; }
-        .sidebar-nav { flex: 1; padding: 16px 8px; overflow-y: auto; }
-        .nav-section-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray-500); padding: 8px 10px 6px; }
-        .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 7px; cursor: pointer; color: var(--gray-400); font-size: 14px; font-weight: 500; transition: all 0.15s; margin-bottom: 2px; border: none; background: none; width: 100%; text-align: left; }
-        .nav-item:hover { background: rgba(255,255,255,0.07); color: white; }
-        .nav-item.active { background: rgba(37,99,235,0.25); color: #93c5fd; }
-        .nav-item-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
-        .nav-badge { margin-left: auto; background: var(--primary); color: white; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 20px; font-family: 'IBM Plex Mono', monospace; }
-        .sidebar-footer { padding: 12px 8px; border-top: 1px solid rgba(255,255,255,0.08); }
-        .user-badge { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: rgba(255,255,255,0.06); border-radius: 7px; }
-        .user-avatar { width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary), #7c3aed); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
-        .user-name { font-size: 13px; font-weight: 600; color: white; }
-        .user-role { font-size: 11px; color: var(--gray-400); }
-        .btn-logout { margin-left: auto; background: none; border: none; color: var(--gray-400); cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; transition: color 0.15s; }
-        .btn-logout:hover { color: var(--danger); }
+/* new profile form */
+.new-prof-form{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:16px;padding:24px;width:100%;max-width:380px;animation:fadeIn .25s ease}
+.new-prof-form h3{font-size:16px;font-weight:700;color:white;margin-bottom:18px}
+.npi{width:100%;padding:10px 14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:var(--r);font-size:14px;font-family:inherit;color:white;margin-bottom:12px}
+.npi::placeholder{color:var(--g5)}
+.npi:focus{outline:none;border-color:var(--P);background:rgba(255,255,255,.15)}
+.avatar-pick{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px}
+.av-opt{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;border:2px solid transparent;transition:all .15s;font-weight:700;color:white}
+.av-opt.sel{border-color:white;transform:scale(1.12)}
+.home-admin-btn{font-size:13px;color:var(--g5);background:none;border:none;cursor:pointer;text-decoration:underline;margin-top:8px;font-family:inherit}
+.home-admin-btn:hover{color:var(--g4)}
 
-        /* MAIN */
-        .main-content { margin-left: var(--sidebar-w); flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
-        .topbar { background: white; border-bottom: 1px solid var(--gray-200); padding: 14px 28px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 50; }
-        .topbar-title { font-size: 18px; font-weight: 700; color: var(--gray-900); }
-        .topbar-subtitle { font-size: 13px; color: var(--gray-500); }
-        .page-body { padding: 28px; flex: 1; animation: fadeIn 0.3s ease; }
+/* ════════════════════════════════════════════════
+   LOGIN (admin)
+════════════════════════════════════════════════ */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--g9),#1e3a5f,var(--g9))}
+.login-card{background:white;border-radius:16px;padding:44px;width:400px;max-width:92vw;box-shadow:0 24px 60px rgba(0,0,0,.4);animation:fadeIn .35s ease}
+.login-logo{width:54px;height:54px;background:linear-gradient(135deg,var(--P),var(--V));border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 14px}
+.login-title{font-size:22px;font-weight:700;color:var(--g9);text-align:center}
+.login-sub{font-size:13px;color:var(--g5);text-align:center;margin:4px 0 28px}
+.fg{margin-bottom:18px}
+.fl{display:block;font-size:12px;font-weight:700;color:var(--g7);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.fi{width:100%;padding:10px 13px;border:2px solid var(--g2);border-radius:var(--r);font-size:14px;font-family:inherit;transition:border-color .2s;background:var(--g0);color:var(--g8)}
+.fi:focus{outline:none;border-color:var(--P);background:white}
+.fi.err{border-color:var(--D)}
+.err-msg{font-size:12px;color:var(--D);margin-top:5px}
+.btn-login{width:100%;padding:12px;background:linear-gradient(135deg,var(--P),var(--V));color:white;border:none;border-radius:var(--r);font-size:15px;font-weight:600;cursor:pointer;margin-top:6px;font-family:inherit;transition:opacity .2s}
+.btn-login:hover{opacity:.9}
 
-        /* STATS */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 28px; }
-        .stat-card { background: white; border: 1px solid var(--gray-200); border-radius: 12px; padding: 20px; display: flex; align-items: center; gap: 14px; }
-        .stat-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
-        .stat-value { font-size: 28px; font-weight: 700; color: var(--gray-900); line-height: 1; }
-        .stat-label { font-size: 12px; color: var(--gray-500); margin-top: 3px; font-weight: 500; }
+/* ════════════════════════════════════════════════
+   APP SHELL
+════════════════════════════════════════════════ */
+.shell{display:flex;min-height:100vh}
+.sidebar{width:var(--sb);background:var(--g9);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:100;transition:transform .25s}
+.sb-head{padding:16px 14px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-brand{display:flex;align-items:center;gap:10px}
+.sb-ico{width:34px;height:34px;background:linear-gradient(135deg,var(--P),var(--V));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.sb-name{font-size:14px;font-weight:700;color:white}
+.sb-ver{font-size:10px;color:var(--g5);font-family:'IBM Plex Mono',monospace}
+.sb-nav{flex:1;padding:12px 8px;overflow-y:auto}
+.nav-sec{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--g5);padding:10px 10px 5px}
+.ni{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:7px;cursor:pointer;color:var(--g4);font-size:13px;font-weight:500;transition:all .15s;margin-bottom:1px;border:none;background:none;width:100%;text-align:left;font-family:inherit}
+.ni:hover{background:rgba(255,255,255,.07);color:white}
+.ni.active{background:rgba(37,99,235,.25);color:#93c5fd}
+.ni-ico{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.nb{margin-left:auto;color:white;font-size:10px;font-weight:700;padding:1px 6px;border-radius:12px;font-family:'IBM Plex Mono',monospace}
+.nb-p{background:var(--P)}
+.nb-g{background:var(--S)}
+.nb-w{background:var(--W)}
+.sb-foot{padding:8px;border-top:1px solid rgba(255,255,255,.08)}
+.prof-row{display:flex;align-items:center;gap:9px;padding:8px 10px;background:rgba(255,255,255,.06);border-radius:7px;margin-bottom:6px}
+.prof-av-sm{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:white;flex-shrink:0}
+.prof-n{font-size:12px;font-weight:600;color:white;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prof-r{font-size:10px;color:var(--g4)}
+.btn-lo{margin-left:auto;background:none;border:none;color:var(--g5);cursor:pointer;font-size:14px;padding:3px;border-radius:4px;transition:color .15s;flex-shrink:0}
+.btn-lo:hover{color:var(--D)}
 
-        /* TABLE */
-        .table-container { background: white; border: 1px solid var(--gray-200); border-radius: 12px; overflow: hidden; }
-        .table-toolbar { padding: 16px 20px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .search-wrap { position: relative; }
-        .search-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--gray-400); font-size: 14px; pointer-events: none; }
-        .search-input { padding: 8px 12px 8px 34px; border: 1px solid var(--gray-200); border-radius: var(--radius); font-size: 14px; font-family: inherit; width: 240px; background: var(--gray-50); }
-        .search-input:focus { outline: none; border-color: var(--primary); background: white; }
-        .filter-select { padding: 8px 12px; border: 1px solid var(--gray-200); border-radius: var(--radius); font-size: 13px; font-family: inherit; background: var(--gray-50); color: var(--gray-700); cursor: pointer; }
-        .filter-select:focus { outline: none; border-color: var(--primary); }
-        .data-table { width: 100%; border-collapse: collapse; }
-        .data-table th { padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--gray-500); background: var(--gray-50); border-bottom: 1px solid var(--gray-200); white-space: nowrap; }
-        .data-table td { padding: 11px 14px; font-size: 14px; border-bottom: 1px solid var(--gray-100); vertical-align: middle; }
-        .data-table tr:last-child td { border-bottom: none; }
-        .data-table tr:hover td { background: var(--gray-50); }
-        .q-text { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; white-space: nowrap; }
-        .badge-blue { background: var(--primary-light); color: #1d4ed8; }
-        .badge-green { background: var(--success-light); color: #065f46; }
-        .badge-yellow { background: var(--warning-light); color: #92400e; }
-        .badge-red { background: var(--danger-light); color: #991b1b; }
-        .badge-gray { background: var(--gray-100); color: var(--gray-600); }
-        .action-btns { display: flex; gap: 6px; }
-        .btn-icon { padding: 5px 8px; border-radius: 6px; border: 1px solid var(--gray-200); background: white; cursor: pointer; font-size: 13px; transition: all 0.15s; color: var(--gray-600); }
-        .btn-icon:hover { background: var(--gray-100); }
-        .btn-icon.danger:hover { background: var(--danger-light); color: var(--danger); border-color: #fca5a5; }
-        .btn-icon.primary:hover { background: var(--primary-light); color: var(--primary); border-color: #93c5fd; }
+/* ── MOBILE SIDEBAR TOGGLE ── */
+.mob-bar{display:none;background:var(--g9);padding:10px 16px;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:99}
+.mob-toggle{background:none;border:none;color:white;font-size:20px;cursor:pointer;padding:4px}
+.mob-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99}
 
-        /* BUTTONS */
-        .btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border: none; transition: all 0.15s; white-space: nowrap; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: var(--primary-dark); }
-        .btn-success { background: var(--success); color: white; }
-        .btn-success:hover { background: #047857; }
-        .btn-ghost { background: white; color: var(--gray-700); border: 1px solid var(--gray-200); }
-        .btn-ghost:hover { background: var(--gray-50); }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-danger:hover { background: #b91c1c; }
-        .btn-sm { padding: 6px 12px; font-size: 12px; }
+/* ════════════════════════════════════════════════
+   MAIN CONTENT
+════════════════════════════════════════════════ */
+.main{margin-left:var(--sb);flex:1;display:flex;flex-direction:column;min-height:100vh}
+.topbar{background:white;border-bottom:1px solid var(--g2);padding:13px 26px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:50}
+.tb-title{font-size:17px;font-weight:700;color:var(--g9)}
+.tb-sub{font-size:13px;color:var(--g5)}
+.pg{padding:26px;flex:1;animation:fadeIn .3s ease}
 
-        /* MODAL */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; animation: fadeIn 0.2s ease; }
-        .modal { background: white; border-radius: 14px; width: 100%; max-width: 680px; max-height: 90vh; overflow-y: auto; box-shadow: 0 25px 60px rgba(0,0,0,0.35); animation: fadeIn 0.25s ease; }
-        .modal-header { padding: 20px 24px; border-bottom: 1px solid var(--gray-200); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: white; z-index: 1; }
-        .modal-title { font-size: 17px; font-weight: 700; color: var(--gray-900); }
-        .modal-close { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--gray-200); background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: var(--gray-500); transition: all 0.15s; }
-        .modal-close:hover { background: var(--gray-100); }
-        .modal-body { padding: 24px; }
-        .modal-footer { padding: 16px 24px; border-top: 1px solid var(--gray-200); display: flex; gap: 10px; justify-content: flex-end; background: var(--gray-50); border-radius: 0 0 14px 14px; }
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        .form-full { grid-column: 1 / -1; }
-        .mfi { width: 100%; padding: 9px 12px; border: 1px solid var(--gray-300); border-radius: var(--radius); font-size: 14px; font-family: inherit; transition: border-color 0.2s; background: white; color: var(--gray-800); }
-        .mfi:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .option-row { display: flex; align-items: center; gap: 8px; }
-        .option-label { width: 26px; height: 26px; border-radius: 6px; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: var(--gray-600); flex-shrink: 0; }
-        .option-label.correct { background: var(--success); color: white; }
+/* ════════════════════════════════════════════════
+   STAT CARDS
+════════════════════════════════════════════════ */
+.sc-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:22px}
+.sc{background:white;border:1px solid var(--g2);border-radius:12px;padding:16px;display:flex;align-items:center;gap:12px}
+.sc-ico{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0}
+.sc-val{font-size:24px;font-weight:700;color:var(--g9);line-height:1}
+.sc-lbl{font-size:11px;color:var(--g5);margin-top:2px;font-weight:500}
 
-        /* PAGINATION */
-        .pagination { display: flex; align-items: center; justify-content: space-between; padding: 12px 20px; border-top: 1px solid var(--gray-200); background: var(--gray-50); }
-        .pagination-info { font-size: 13px; color: var(--gray-500); }
-        .pagination-btns { display: flex; gap: 6px; }
-        .page-btn { width: 32px; height: 32px; border-radius: 6px; border: 1px solid var(--gray-200); background: white; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 500; transition: all 0.15s; }
-        .page-btn:hover:not(:disabled) { background: var(--primary); color: white; border-color: var(--primary); }
-        .page-btn.current { background: var(--primary); color: white; border-color: var(--primary); }
-        .page-btn:disabled { opacity: 0.4; cursor: default; }
+/* ════════════════════════════════════════════════
+   TABLE / TOOLBAR
+════════════════════════════════════════════════ */
+.tc{background:white;border:1px solid var(--g2);border-radius:12px;overflow:hidden}
+.tb-bar{padding:12px 16px;border-bottom:1px solid var(--g2);display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.sw{position:relative}
+.si{position:absolute;left:9px;top:50%;transform:translateY(-50%);color:var(--g4);font-size:13px;pointer-events:none}
+.sinp{padding:7px 11px 7px 30px;border:1px solid var(--g2);border-radius:var(--r);font-size:13px;font-family:inherit;width:200px;background:var(--g0)}
+.sinp:focus{outline:none;border-color:var(--P);background:white}
+.fsel{padding:7px 11px;border:1px solid var(--g2);border-radius:var(--r);font-size:12px;font-family:inherit;background:var(--g0);color:var(--g7);cursor:pointer}
+.fsel:focus{outline:none;border-color:var(--P)}
+.dt{width:100%;border-collapse:collapse}
+.dt th{padding:9px 13px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--g5);background:var(--g0);border-bottom:1px solid var(--g2);white-space:nowrap}
+.dt td{padding:9px 13px;font-size:13px;border-bottom:1px solid var(--g1);vertical-align:middle}
+.dt tr:last-child td{border-bottom:none}
+.dt tr:hover td{background:var(--g0)}
+.qt{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap}
+.b-blue{background:var(--PL);color:#1d4ed8}
+.b-green{background:var(--SL);color:#065f46}
+.b-yellow{background:var(--WL);color:#92400e}
+.b-red{background:var(--DL);color:#991b1b}
+.b-gray{background:var(--g1);color:var(--g6)}
+.b-purple{background:var(--VL);color:#5b21b6}
+.ab{display:flex;gap:5px}
+.ib{padding:4px 7px;border-radius:5px;border:1px solid var(--g2);background:white;cursor:pointer;font-size:11px;transition:all .15s;color:var(--g6)}
+.ib:hover{background:var(--g1)}
+.ib.d:hover{background:var(--DL);color:var(--D);border-color:#fca5a5}
+.ib.p:hover{background:var(--PL);color:var(--P);border-color:#93c5fd}
 
-        /* TOAST */
-        .toast { position: fixed; bottom: 24px; right: 24px; background: var(--gray-900); color: white; padding: 12px 20px; border-radius: 10px; font-size: 14px; font-weight: 500; z-index: 9999; box-shadow: 0 10px 30px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 10px; animation: fadeIn 0.3s ease; max-width: 360px; }
-        .toast.success { background: #064e3b; border-left: 4px solid var(--success); }
-        .toast.error { background: #7f1d1d; border-left: 4px solid var(--danger); }
-        .toast.info { background: #1e3a5f; border-left: 4px solid var(--primary); }
+/* ════════════════════════════════════════════════
+   BUTTONS
+════════════════════════════════════════════════ */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 15px;border-radius:var(--r);font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
+.bp{background:var(--P);color:white}.bp:hover{background:var(--PD)}
+.bs{background:var(--S);color:white}.bs:hover{background:#047857}
+.bg{background:white;color:var(--g7);border:1px solid var(--g2)}.bg:hover{background:var(--g0)}
+.bd{background:var(--D);color:white}.bd:hover{background:#b91c1c}
+.bw{background:var(--W);color:white}.bw:hover{background:#b45309}
+.bv{background:var(--V);color:white}.bv:hover{background:#6d28d9}
+.btn-sm{padding:5px 10px;font-size:12px}
 
-        /* EXAM MENU */
-        .menu-wrap { max-width: 860px; margin: 0 auto; }
-        .section-card { background: white; border: 1px solid var(--gray-200); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
-        .section-card-title { font-size: 15px; font-weight: 700; color: var(--gray-800); margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
-        .chip-grid { display: flex; flex-wrap: wrap; gap: 8px; }
-        .chip { padding: 7px 16px; border: 2px solid var(--gray-200); border-radius: 20px; font-size: 13px; font-weight: 500; cursor: pointer; background: white; color: var(--gray-600); transition: all 0.15s; font-family: inherit; }
-        .chip:hover { border-color: var(--primary); color: var(--primary); }
-        .chip.active { background: var(--primary); border-color: var(--primary); color: white; }
+/* ════════════════════════════════════════════════
+   MODAL
+════════════════════════════════════════════════ */
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.52);display:flex;align-items:center;justify-content:center;z-index:1000;padding:20px;animation:fadeIn .18s ease}
+.ov-top{align-items:flex-start;padding-top:36px}
+.mo{background:white;border-radius:14px;width:100%;max-width:640px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.35);animation:fadeIn .22s ease}
+.mo-wide{max-width:880px}
+.mh{padding:17px 22px;border-bottom:1px solid var(--g2);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:white;z-index:1;border-radius:14px 14px 0 0}
+.mt{font-size:15px;font-weight:700;color:var(--g9)}
+.mc{width:28px;height:28px;border-radius:6px;border:1px solid var(--g2);background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--g5);transition:all .15s}
+.mc:hover{background:var(--g1)}
+.mb{padding:20px 22px}
+.mf{padding:13px 22px;border-top:1px solid var(--g2);display:flex;gap:9px;justify-content:flex-end;background:var(--g0);border-radius:0 0 14px 14px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.ff{grid-column:1/-1}
+.mfi{width:100%;padding:8px 11px;border:1px solid var(--g3);border-radius:var(--r);font-size:13px;font-family:inherit;transition:border-color .2s;background:white;color:var(--g8)}
+.mfi:focus{outline:none;border-color:var(--P);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.og{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.or{display:flex;align-items:center;gap:8px}
+.ol{width:24px;height:24px;border-radius:5px;background:var(--g1);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--g6);flex-shrink:0}
+.ol.ok{background:var(--S);color:white}
 
-        /* EXAM */
-        .exam-wrap { max-width: 820px; margin: 0 auto; padding: 30px 20px; }
-        .exam-topbar { background: white; border-radius: 12px; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
-        .progress-bar { height: 6px; background: var(--gray-200); border-radius: 3px; margin-top: 6px; overflow: hidden; flex: 1; max-width: 300px; }
-        .progress-fill { height: 100%; background: var(--success); border-radius: 3px; transition: width 0.3s; }
-        .exam-card { background: white; border-radius: 12px; padding: 36px; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
-        .question-num { font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 12px; }
-        .question-text { font-size: 20px; color: var(--gray-900); line-height: 1.6; margin-bottom: 28px; }
-        .answers { display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
-        .answer-btn { padding: 14px 16px; border: 2px solid var(--gray-200); border-radius: 10px; background: white; cursor: pointer; font-size: 15px; font-family: inherit; text-align: left; display: flex; align-items: center; gap: 12px; transition: all 0.15s; color: var(--gray-700); }
-        .answer-btn:hover { border-color: var(--primary); background: var(--primary-light); color: var(--primary); }
-        .answer-btn.selected { border-color: var(--primary); background: var(--primary); color: white; }
-        .answer-letter { width: 28px; height: 28px; border-radius: 6px; background: rgba(0,0,0,0.07); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
-        .exam-nav { display: flex; gap: 12px; justify-content: center; }
+/* ════════════════════════════════════════════════
+   PAGINATION
+════════════════════════════════════════════════ */
+.pag{display:flex;align-items:center;justify-content:space-between;padding:9px 16px;border-top:1px solid var(--g2);background:var(--g0)}
+.pag-inf{font-size:12px;color:var(--g5)}
+.pag-btns{display:flex;gap:4px}
+.pb{width:28px;height:28px;border-radius:5px;border:1px solid var(--g2);background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;transition:all .15s}
+.pb:hover:not(:disabled){background:var(--P);color:white;border-color:var(--P)}
+.pb.cur{background:var(--P);color:white;border-color:var(--P)}
+.pb:disabled{opacity:.38;cursor:default}
 
-        /* RESULTS */
-        .score-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; max-width: 500px; margin: 28px auto; }
-        .score-box { background: white; border: 1px solid var(--gray-200); border-radius: 12px; padding: 20px; text-align: center; }
-        .score-num { font-size: 36px; font-weight: 800; line-height: 1; }
-        .score-lbl { font-size: 12px; color: var(--gray-500); margin-top: 6px; text-transform: uppercase; font-weight: 600; }
+/* ════════════════════════════════════════════════
+   TOAST
+════════════════════════════════════════════════ */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--g9);color:white;padding:10px 16px;border-radius:9px;font-size:13px;font-weight:500;z-index:9999;box-shadow:0 8px 28px rgba(0,0,0,.28);display:flex;align-items:center;gap:9px;animation:fadeIn .25s ease;max-width:320px}
+.toast.success{background:#064e3b;border-left:3px solid var(--S)}
+.toast.error{background:#7f1d1d;border-left:3px solid var(--D)}
+.toast.info{background:#1e3a5f;border-left:3px solid var(--P)}
+.toast.warning{background:#78350f;border-left:3px solid var(--W)}
 
-        .empty-state { text-align: center; padding: 60px 20px; color: var(--gray-400); }
+/* ════════════════════════════════════════════════
+   EXAM MENU
+════════════════════════════════════════════════ */
+.menu-wrap{max-width:820px;margin:0 auto}
+.sec{background:white;border:1px solid var(--g2);border-radius:12px;padding:20px;margin-bottom:16px}
+.sec-title{font-size:14px;font-weight:700;color:var(--g8);margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.chips{display:flex;flex-wrap:wrap;gap:7px}
+.chip{padding:6px 14px;border:2px solid var(--g2);border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;background:white;color:var(--g6);transition:all .15s;font-family:inherit}
+.chip:hover{border-color:var(--P);color:var(--P)}
+.chip.active{background:var(--P);border-color:var(--P);color:white}
 
-        @media (max-width: 768px) {
-            :root { --sidebar-w: 0px; }
-            .sidebar { display: none; }
-            .form-grid { grid-template-columns: 1fr; }
-            .options-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+/* ════════════════════════════════════════════════
+   EXAM
+════════════════════════════════════════════════ */
+.exam-wrap{max-width:800px;margin:0 auto;padding:24px 18px}
+.exam-top{background:white;border-radius:12px;padding:13px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;box-shadow:0 2px 10px rgba(0,0,0,.06);gap:14px;flex-wrap:wrap}
+.prog-sec{flex:1;min-width:180px}
+.prog-info{font-size:12px;color:var(--g6);margin-bottom:5px;font-weight:500;display:flex;gap:10px;align-items:center}
+.prog-bar{height:7px;background:var(--g2);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:var(--S);border-radius:4px;transition:width .4s ease}
+.timer-wrap{display:flex;align-items:center;gap:7px}
+.timer-num{font-family:'IBM Plex Mono',monospace;font-size:19px;font-weight:700;min-width:40px;text-align:center}
+.timer-num.warn{color:var(--W)}
+.timer-num.danger{color:var(--D);animation:blink 1s infinite}
+.exam-card{background:white;border-radius:12px;padding:30px;box-shadow:0 2px 10px rgba(0,0,0,.06);animation:fadeIn .22s ease}
+.q-num{font-size:11px;font-weight:700;color:var(--P);text-transform:uppercase;letter-spacing:.08em;margin-bottom:9px}
+.q-txt{font-size:19px;color:var(--g9);line-height:1.65;margin-bottom:24px;font-weight:600}
+.ans-list{display:flex;flex-direction:column;gap:9px;margin-bottom:20px}
+.ans{padding:12px 14px;border:2px solid var(--g2);border-radius:10px;background:white;cursor:pointer;font-size:14px;font-family:inherit;text-align:left;display:flex;align-items:center;gap:11px;transition:all .18s;color:var(--g7)}
+.ans:not(.rev):hover{border-color:var(--P);background:var(--PL);color:var(--P)}
+.ans.sel:not(.rev){border-color:var(--P);background:var(--P);color:white}
+.ans.cor{border-color:var(--S)!important;background:var(--SL)!important;color:#065f46!important;animation:glow .6s ease}
+.ans.wrg{border-color:var(--D)!important;background:var(--DL)!important;color:#991b1b!important;animation:shake .4s ease}
+.ans.rev{cursor:not-allowed}
+.ans-ltr{width:26px;height:26px;border-radius:5px;background:rgba(0,0,0,.07);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.ans-ico{margin-left:auto;font-size:15px}
+.fbk{display:flex;align-items:center;gap:9px;padding:10px 13px;border-radius:9px;margin-bottom:16px;font-size:13px;font-weight:600;animation:fadeIn .28s ease}
+.fbk.cor{background:var(--SL);color:#065f46;border:1px solid #a7f3d0}
+.fbk.wrg{background:var(--DL);color:#991b1b;border:1px solid #fca5a5}
+.fbk.tmt{background:var(--WL);color:#92400e;border:1px solid #fcd34d}
+.kbd{font-size:10px;color:var(--g4);text-align:center;margin-top:6px;display:flex;justify-content:center;gap:10px}
+.kk{display:inline-flex;align-items:center;gap:3px}
+.kkey{background:var(--g1);border:1px solid var(--g3);border-radius:3px;padding:1px 5px;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--g6)}
+
+/* ════════════════════════════════════════════════
+   RESULTS
+════════════════════════════════════════════════ */
+.res-wrap{max-width:820px;margin:0 auto;padding:24px 18px}
+.score-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;max-width:600px;margin:22px auto}
+.sbox{background:white;border:1px solid var(--g2);border-radius:11px;padding:16px;text-align:center}
+.snum{font-size:32px;font-weight:800;line-height:1}
+.slbl{font-size:10px;color:var(--g5);margin-top:5px;text-transform:uppercase;font-weight:600}
+
+/* ════════════════════════════════════════════════
+   CATEGORY MANAGER
+════════════════════════════════════════════════ */
+.cat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:14px}
+.cat-card{background:white;border:1px solid var(--g2);border-radius:12px;overflow:hidden;transition:box-shadow .15s}
+.cat-card:hover{box-shadow:0 4px 14px rgba(0,0,0,.07)}
+.cat-head{padding:14px 16px;background:linear-gradient(135deg,var(--PL),var(--VL));display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.cat-name{font-size:14px;font-weight:700;color:var(--g8)}
+.cat-count{font-size:11px;color:var(--g5);margin-top:2px}
+.cat-body{padding:12px 16px}
+.sub-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--g1)}
+.sub-row:last-child{border-bottom:none}
+.sub-name{font-size:12px;color:var(--g7)}
+.sub-cnt{font-size:10px;color:var(--g4);font-family:'IBM Plex Mono',monospace}
+
+/* ════════════════════════════════════════════════
+   SETTINGS
+════════════════════════════════════════════════ */
+.set-card{background:white;border:1px solid var(--g2);border-radius:12px;padding:20px;margin-bottom:16px}
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--g1);gap:16px}
+.set-row:last-child{border-bottom:none}
+.set-lbl{font-size:14px;font-weight:600;color:var(--g8)}
+.set-desc{font-size:12px;color:var(--g5);margin-top:2px}
+.set-ctrl{display:flex;align-items:center;gap:7px;flex-shrink:0;flex-wrap:wrap}
+.numinp{width:74px;padding:7px 9px;border:1px solid var(--g3);border-radius:var(--r);font-size:14px;font-family:'IBM Plex Mono',monospace;font-weight:700;text-align:center;color:var(--P)}
+.numinp:focus{outline:none;border-color:var(--P)}
+
+/* ════════════════════════════════════════════════
+   HISTORY
+════════════════════════════════════════════════ */
+.hist-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--g1);flex-wrap:wrap;transition:background .1s}
+.hist-row:last-child{border-bottom:none}
+.hist-row:hover{background:var(--g0)}
+.hist-date{font-size:11px;color:var(--g5);font-family:'IBM Plex Mono',monospace;min-width:120px}
+.hist-cat{flex:1;font-size:12px;color:var(--g7)}
+.hist-pct{font-size:17px;font-weight:700;min-width:40px;text-align:right}
+
+/* ════════════════════════════════════════════════
+   PROFILE STATS
+════════════════════════════════════════════════ */
+.pstat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:22px}
+.pstat{background:white;border:1px solid var(--g2);border-radius:12px;padding:18px;text-align:center}
+.pstat-num{font-size:28px;font-weight:800;line-height:1;margin-bottom:4px}
+.pstat-lbl{font-size:11px;color:var(--g5);font-weight:600;text-transform:uppercase}
+
+/* ════════════════════════════════════════════════
+   EMPTY
+════════════════════════════════════════════════ */
+.empty{text-align:center;padding:52px 20px;color:var(--g4)}
+
+/* ════════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════════ */
+@media(max-width:768px){
+  :root{--sb:0px}
+  .sidebar{transform:translateX(-248px);width:248px}
+  .sidebar.open{transform:translateX(0)}
+  .mob-bar{display:flex}
+  .mob-overlay.open{display:block}
+  .main{margin-left:0}
+  .fg2{grid-template-columns:1fr}
+  .og{grid-template-columns:1fr}
+  .score-grid{grid-template-columns:repeat(2,1fr)}
+  .exam-top{gap:8px}
+  .admin-only{display:none!important}
+}
+</style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useRef } = React;
+const {useState,useEffect,useRef,useCallback,useMemo}=React;
 
-const DEFAULT_QUESTIONS = [
-    { id: 1, text: "Türkiye'nin başkenti neresidir?", category: "Coğrafya", subcategory: "Türkiye", difficulty: "Kolay", options: ["İstanbul", "Ankara", "İzmir", "Bursa"], correctAnswer: 1, explanation: "Ankara, 1923'ten beri Türkiye'nin başkenti." },
-    { id: 2, text: "Anadolu'nun en yüksek dağı hangisidir?", category: "Coğrafya", subcategory: "Türkiye", difficulty: "Orta", options: ["Kaçkar Dağı", "Erciyes Dağı", "Aladag", "Suphan Dağı"], correctAnswer: 1, explanation: "Erciyes Dağı 3917 metredir." },
-    { id: 3, text: "Dünya'nın en yüksek dağı hangisidir?", category: "Coğrafya", subcategory: "Dünya", difficulty: "Kolay", options: ["K2", "Everest", "Kilimanjaro", "Denali"], correctAnswer: 1, explanation: "Mount Everest 8.848 metre." },
-    { id: 4, text: "2+2 kaçtır?", category: "Matematik", subcategory: "Temel İşlemler", difficulty: "Kolay", options: ["3", "4", "5", "6"], correctAnswer: 1, explanation: "2+2=4" },
-    { id: 5, text: "15 × 12 kaçtır?", category: "Matematik", subcategory: "Temel İşlemler", difficulty: "Orta", options: ["150", "160", "180", "200"], correctAnswer: 2, explanation: "15 × 12 = 180" },
-    { id: 6, text: "Pisagor Teoremi nedir?", category: "Matematik", subcategory: "Geometri", difficulty: "Zor", options: ["a+b=c", "a²+b²=c²", "a³+b³=c³", "a/b=c"], correctAnswer: 1, explanation: "Dik üçgende hipotenüsün karesi, diğer iki kenarın kareleri toplamına eşittir." },
-    { id: 7, text: "Bir dairenin alanı nasıl hesaplanır?", category: "Matematik", subcategory: "Geometri", difficulty: "Orta", options: ["πr", "2πr", "πr²", "πd²"], correctAnswer: 2, explanation: "Daire alanı = πr²" },
-    { id: 8, text: "Mitokondri neyin organeli?", category: "Biyoloji", subcategory: "Hücre", difficulty: "Orta", options: ["Çekirdek", "Hücre", "Kalp", "Beyin"], correctAnswer: 1, explanation: "Mitokondri hücrenin enerji fabrikasıdır." },
-    { id: 9, text: "Fotosentez nedir?", category: "Biyoloji", subcategory: "Bitki Fizyolojisi", difficulty: "Orta", options: ["Işık yayan bir olay", "Bitkinin ışığı enerjiye dönüştürdüğü olay", "Su üreten olay", "Mitokondride gerçekleşen olay"], correctAnswer: 1, explanation: "Fotosentez, ışık enerjisinin kimyasal enerjiye dönüştürüldüğü biyolojik olaydır." },
-    { id: 10, text: "İnsan vücudunda kaç kemik bulunur?", category: "Biyoloji", subcategory: "İnsan Anatomisi", difficulty: "Kolay", options: ["150", "206", "250", "300"], correctAnswer: 1, explanation: "Erişkin insan vücudunda 206 kemik bulunur." },
-    { id: 11, text: "DNA'nın tam adı nedir?", category: "Biyoloji", subcategory: "Genetik", difficulty: "Kolay", options: ["Deoxyribose Nucleic Acid", "Deoxyribonucleic Acid", "Deoxynucleic Acid", "Diribonucleic Acid"], correctAnswer: 1, explanation: "DNA: Deoxyribonucleic Acid." },
-    { id: 12, text: "İçerik Yönetim Sistemi'nin İngilizce kısaltması nedir?", category: "Bilgisayar", subcategory: "Web Teknolojileri", difficulty: "Kolay", options: ["CMS", "IYS", "WMS", "DMS"], correctAnswer: 0, explanation: "Content Management System (CMS)." },
-    { id: 13, text: "HTML'in anlamı nedir?", category: "Bilgisayar", subcategory: "Web Teknolojileri", difficulty: "Kolay", options: ["Hyper Tool Markup Language", "High Text Mark Language", "HyperText Markup Language", "Hyper Timed Markup Language"], correctAnswer: 2, explanation: "HyperText Markup Language." },
-    { id: 14, text: "Python programlama dili kaç yılında yayınlanmıştır?", category: "Bilgisayar", subcategory: "Programlama", difficulty: "Orta", options: ["1989", "1991", "1993", "1995"], correctAnswer: 1, explanation: "Python'un ilk versiyonu 1991'de yayınlandı." }
+/* ══════════════════════════════════════
+   AUTH (obfuscated)
+══════════════════════════════════════ */
+const _A=[{_u:'\x72\x65\x76\x65\x62\x69\x72',_p:'\x34\x31\x35\x36\x33\x32',name:'revebir',role:'Yönetici'}];
+const chkAuth=(u,p)=>_A.find(x=>x._u===u&&x._p===p);
+
+/* ══════════════════════════════════════
+   CONSTANTS & HELPERS
+══════════════════════════════════════ */
+const DIFFS=['Kolay','Orta','Zor'];
+const diffB=d=>d==='Kolay'?'b-green':d==='Orta'?'b-yellow':'b-red';
+const DTIMER=60;
+const AVATAR_COLORS=['#2563eb','#059669','#d97706','#dc2626','#7c3aed','#0891b2','#be185d','#65a30d'];
+const AVATAR_EMOJIS=['👤','🧑','👩','🎓','🧑‍💻','📚','🏆','⭐'];
+
+const gs=(k,fb)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):fb}catch{return fb}};
+const ss=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
+const norm=s=>(s||'').trim().toLowerCase().replace(/\s+/g,' ');
+const shuffle=a=>{const r=[...a];for(let i=r.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[r[i],r[j]]=[r[j],r[i]]}return r};
+const fmtDate=d=>{try{return new Date(d).toLocaleString('tr-TR',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})}catch{return''}};
+const qExact=(a,b)=>norm(a.text)===norm(b.text)&&a.options.every((o,i)=>norm(o)===norm(b.options[i]))&&a.correctAnswer===b.correctAnswer&&norm(a.category)===norm(b.category);
+const qSim=(a,b)=>norm(a.text)===norm(b.text)&&!qExact(a,b);
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2);
+
+/* ══════════════════════════════════════
+   DEFAULT DATA
+══════════════════════════════════════ */
+const DQ=[
+  {id:'q1',text:"Türkiye'nin başkenti neresidir?",category:"Coğrafya",subcategory:"Türkiye",difficulty:"Kolay",options:["İstanbul","Ankara","İzmir","Bursa"],correctAnswer:1,explanation:"Ankara, 1923'ten beri Türkiye'nin başkenti."},
+  {id:'q2',text:"Anadolu'nun en yüksek dağı hangisidir?",category:"Coğrafya",subcategory:"Türkiye",difficulty:"Orta",options:["Kaçkar Dağı","Erciyes Dağı","Aladag","Suphan Dağı"],correctAnswer:1,explanation:"Erciyes Dağı 3917 metredir."},
+  {id:'q3',text:"Dünya'nın en yüksek dağı hangisidir?",category:"Coğrafya",subcategory:"Dünya",difficulty:"Kolay",options:["K2","Everest","Kilimanjaro","Denali"],correctAnswer:1,explanation:"Mount Everest 8848 metre."},
+  {id:'q4',text:"2+2 kaçtır?",category:"Matematik",subcategory:"Temel İşlemler",difficulty:"Kolay",options:["3","4","5","6"],correctAnswer:1,explanation:"2+2=4"},
+  {id:'q5',text:"15×12 kaçtır?",category:"Matematik",subcategory:"Temel İşlemler",difficulty:"Orta",options:["150","160","180","200"],correctAnswer:2,explanation:"15×12=180"},
+  {id:'q6',text:"Pisagor Teoremi nedir?",category:"Matematik",subcategory:"Geometri",difficulty:"Zor",options:["a+b=c","a²+b²=c²","a³+b³=c³","a/b=c"],correctAnswer:1,explanation:"Dik üçgende hipotenüs karesi diğer iki kenar karelerinin toplamına eşittir."},
+  {id:'q7',text:"Bir dairenin alanı nasıl hesaplanır?",category:"Matematik",subcategory:"Geometri",difficulty:"Orta",options:["πr","2πr","πr²","πd²"],correctAnswer:2,explanation:"Daire alanı=πr²"},
+  {id:'q8',text:"Mitokondri neyin organeli?",category:"Biyoloji",subcategory:"Hücre",difficulty:"Orta",options:["Çekirdek","Hücre","Kalp","Beyin"],correctAnswer:1,explanation:"Mitokondri hücrenin enerji fabrikasıdır."},
+  {id:'q9',text:"Fotosentez nedir?",category:"Biyoloji",subcategory:"Bitki Fizyolojisi",difficulty:"Orta",options:["Işık yayan olay","Bitkinin ışığı enerjiye dönüştürdüğü olay","Su üreten olay","Mitokondride gerçekleşen olay"],correctAnswer:1,explanation:"Fotosentez ışık enerjisinin kimyasal enerjiye dönüşümüdür."},
+  {id:'q10',text:"İnsan vücudunda kaç kemik bulunur?",category:"Biyoloji",subcategory:"İnsan Anatomisi",difficulty:"Kolay",options:["150","206","250","300"],correctAnswer:1,explanation:"Erişkin insan vücudunda 206 kemik bulunur."},
+  {id:'q11',text:"DNA'nın tam adı nedir?",category:"Biyoloji",subcategory:"Genetik",difficulty:"Kolay",options:["Deoxyribose Nucleic Acid","Deoxyribonucleic Acid","Deoxynucleic Acid","Diribonucleic Acid"],correctAnswer:1,explanation:"DNA: Deoxyribonucleic Acid."},
+  {id:'q12',text:"İçerik Yönetim Sistemi'nin kısaltması nedir?",category:"Bilgisayar",subcategory:"Web Teknolojileri",difficulty:"Kolay",options:["CMS","IYS","WMS","DMS"],correctAnswer:0,explanation:"Content Management System (CMS)."},
+  {id:'q13',text:"HTML'in anlamı nedir?",category:"Bilgisayar",subcategory:"Web Teknolojileri",difficulty:"Kolay",options:["Hyper Tool Markup Language","High Text Mark Language","HyperText Markup Language","Hyper Timed Markup Language"],correctAnswer:2,explanation:"HyperText Markup Language."},
+  {id:'q14',text:"Python programlama dili kaç yılında yayınlanmıştır?",category:"Bilgisayar",subcategory:"Programlama",difficulty:"Orta",options:["1989","1991","1993","1995"],correctAnswer:1,explanation:"Python'un ilk versiyonu 1991'de yayınlandı."}
 ];
 
-const USERS = [
-    { username: 'admin', password: 'admin123', name: 'Admin', role: 'Yönetici' },
-    { username: 'editor', password: 'editor123', name: 'Editör', role: 'Editör' }
-];
-
-const DIFFICULTIES = ['Kolay', 'Orta', 'Zor'];
-const diffBadge = d => d === 'Kolay' ? 'badge-green' : d === 'Orta' ? 'badge-yellow' : 'badge-red';
-
-function gs(k, fb) { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fb; } catch { return fb; } }
-function ss(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} }
-
-function Toast({ msg, type, onDone }) {
-    useEffect(() => { const t = setTimeout(onDone, 3000); return () => clearTimeout(t); }, []);
-    return <div className={`toast ${type}`}><span>{type==='success'?'✓':type==='error'?'✕':'ℹ'}</span>{msg}</div>;
+/* ══════════════════════════════════════
+   TOAST
+══════════════════════════════════════ */
+function Toast({msg,type,onDone}){
+  useEffect(()=>{const t=setTimeout(onDone,3200);return()=>clearTimeout(t)},[]);
+  return <div className={`toast ${type}`}><span>{type==='success'?'✓':type==='error'?'✕':type==='warning'?'⚠':'ℹ'}</span>{msg}</div>;
 }
 
-const blankQ = () => ({ text:'', category:'', subcategory:'', difficulty:'Orta', options:['','','',''], correctAnswer:0, explanation:'' });
+/* ══════════════════════════════════════
+   TIMER RING
+══════════════════════════════════════ */
+function TimerRing({rem,total}){
+  const pct=Math.max(0,rem/total),r=17,circ=2*Math.PI*r;
+  const col=rem<=5?'#dc2626':rem<=10?'#d97706':'#059669';
+  return(
+    <svg width="42" height="42" viewBox="0 0 42 42">
+      <circle cx="21" cy="21" r={r} fill="none" stroke="#e2e8f0" strokeWidth="3.5"/>
+      <circle cx="21" cy="21" r={r} fill="none" stroke={col} strokeWidth="3.5"
+        strokeDasharray={circ} strokeDashoffset={circ*(1-pct)} strokeLinecap="round"
+        style={{transform:'rotate(-90deg)',transformOrigin:'50% 50%',transition:'stroke-dashoffset .9s linear,stroke .3s'}}/>
+      <text x="21" y="25.5" textAnchor="middle" fontSize="10" fontWeight="700" fill={col} fontFamily="IBM Plex Mono">{rem}</text>
+    </svg>
+  );
+}
 
-function QuestionModal({ question, onSave, onClose }) {
-    const [form, setForm] = useState(question ? {...question, options:[...question.options]} : blankQ());
-    const set = (k, v) => setForm(f => ({...f, [k]:v}));
-    const setOpt = (i, v) => setForm(f => { const o=[...f.options]; o[i]=v; return {...f, options:o}; });
-    const valid = form.text.trim() && form.category.trim() && form.options.every(o => o.trim());
-    return (
-        <div className="modal-overlay" onClick={e => e.target===e.currentTarget && onClose()}>
-            <div className="modal">
-                <div className="modal-header">
-                    <span className="modal-title">{question ? '✏️ Soru Düzenle' : '➕ Yeni Soru Ekle'}</span>
-                    <button className="modal-close" onClick={onClose}>✕</button>
-                </div>
-                <div className="modal-body">
-                    <div className="form-grid">
-                        <div className="form-full">
-                            <div className="form-label">Soru Metni *</div>
-                            <textarea className="mfi" rows={3} value={form.text} onChange={e=>set('text',e.target.value)} placeholder="Soruyu buraya yazın..." style={{resize:'vertical'}} />
-                        </div>
-                        <div>
-                            <div className="form-label">Kategori *</div>
-                            <input className="mfi" value={form.category} onChange={e=>set('category',e.target.value)} placeholder="ör: Matematik" />
-                        </div>
-                        <div>
-                            <div className="form-label">Alt Kategori</div>
-                            <input className="mfi" value={form.subcategory} onChange={e=>set('subcategory',e.target.value)} placeholder="ör: Geometri" />
-                        </div>
-                        <div>
-                            <div className="form-label">Zorluk</div>
-                            <select className="mfi" value={form.difficulty} onChange={e=>set('difficulty',e.target.value)}>
-                                {DIFFICULTIES.map(d=><option key={d}>{d}</option>)}
-                            </select>
-                        </div>
-                        <div>
-                            <div className="form-label">Doğru Cevap</div>
-                            <select className="mfi" value={form.correctAnswer} onChange={e=>set('correctAnswer',parseInt(e.target.value))}>
-                                {['A','B','C','D'].map((l,i)=><option key={i} value={i}>{l} Şıkkı</option>)}
-                            </select>
-                        </div>
-                        <div className="form-full">
-                            <div className="form-label">Şıklar *</div>
-                            <div className="options-grid">
-                                {['A','B','C','D'].map((l,i)=>(
-                                    <div key={i} className="option-row">
-                                        <div className={`option-label ${form.correctAnswer===i?'correct':''}`}>{l}</div>
-                                        <input className="mfi" value={form.options[i]} onChange={e=>setOpt(i,e.target.value)} placeholder={`${l} şıkkı`} style={{flex:1}} />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="form-full">
-                            <div className="form-label">Açıklama (opsiyonel)</div>
-                            <textarea className="mfi" rows={2} value={form.explanation} onChange={e=>set('explanation',e.target.value)} placeholder="Doğru cevabın açıklaması..." style={{resize:'vertical'}} />
-                        </div>
-                    </div>
-                </div>
-                <div className="modal-footer">
-                    <button className="btn btn-ghost" onClick={onClose}>İptal</button>
-                    <button className="btn btn-primary" onClick={()=>valid&&onSave(form)} style={{opacity:valid?1:0.5}}>
-                        {question ? '💾 Kaydet' : '➕ Ekle'}
-                    </button>
-                </div>
+/* ══════════════════════════════════════
+   TIMER HOOK
+══════════════════════════════════════ */
+function useTimer(secs,onExp,active){
+  const [rem,setRem]=useState(secs);
+  const ref=useRef();
+  useEffect(()=>setRem(secs),[secs]);
+  useEffect(()=>{
+    if(!active){clearInterval(ref.current);return;}
+    clearInterval(ref.current);
+    ref.current=setInterval(()=>setRem(r=>{if(r<=1){clearInterval(ref.current);onExp();return 0;}return r-1}),1000);
+    return()=>clearInterval(ref.current);
+  },[active]);
+  const reset=useCallback(s=>{clearInterval(ref.current);setRem(s!==undefined?s:secs)},[secs]);
+  const stop=useCallback(()=>clearInterval(ref.current),[]);
+  return{rem,reset,stop};
+}
+
+/* ══════════════════════════════════════
+   QUESTION MODAL
+══════════════════════════════════════ */
+const blankQ=()=>({text:'',category:'',subcategory:'',difficulty:'Orta',options:['','','',''],correctAnswer:0,explanation:''});
+function QModal({q,allQuestions,onSave,onClose}){
+  const [f,setF]=useState(q?{...q,options:[...q.options]}:blankQ());
+  const set=(k,v)=>setF(p=>({...p,[k]:v}));
+  const setO=(i,v)=>setF(p=>{const o=[...p.options];o[i]=v;return{...p,options:o}});
+  const ok=f.text.trim()&&f.category.trim()&&f.options.every(o=>o.trim());
+  const cats=[...new Set(allQuestions.map(q=>q.category))].sort();
+  const subs=[...new Set(allQuestions.filter(q=>q.category===f.category).map(q=>q.subcategory))].sort();
+  return(
+    <div className="ov" onClick={e=>e.target===e.currentTarget&&onClose()}>
+      <div className="mo">
+        <div className="mh"><span className="mt">{q?'✏️ Soru Düzenle':'➕ Yeni Soru Ekle'}</span><button className="mc" onClick={onClose}>✕</button></div>
+        <div className="mb">
+          <div className="fg2">
+            <div className="ff">
+              <div className="fl" style={{fontSize:11,fontWeight:700,color:'var(--g6)',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:5}}>Soru Metni *</div>
+              <textarea className="mfi" rows={3} value={f.text} onChange={e=>set('text',e.target.value)} placeholder="Soruyu yazın..." style={{resize:'vertical'}}/>
             </div>
+            <div>
+              <div className="fl" style={{fontSize:11,fontWeight:700,color:'var(--g6)',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:5}}>Kategori *</div>
+              <input className="mfi" value={f.category} onChange={e=>set('category',e.target.value)} placeholder="ör: Matematik" list="cat-datalist"/>
+              <datalist id="cat-datalist">{cats.map(c=><option key={c} value={c}/>)}</datalist>
+            </div>
+            <div>
+              <div className="fl" style={{fontSize:11,fontWeight:700,color:'var(--g6)',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:5}}>Alt Kategori</div>
+              <input className="mfi" value={f.subcategory} onChange={e=>set('subcategory',e.target.value)} placeholder="ör: Geometri" list="sub-datalist"/>
+              <datalist id="sub-datalist">{subs.map(s=><option key={s} value={s}/>)}</datalist>
+            </div>
+            <div>
+              <div className="fl" style={{fontSize:11,fontWeight:700,color:'var(--g6)',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:5}}>Zorluk</div>
+              <select className="mfi" value={f.difficulty} onChange={e=>set('difficulty',e.target.value)}>{DIFFS.map(d=><option key={d}>{d}</option>)}</select>
+            </div>
+            <div>
+              <div className="fl" style={{fontSize:11,fontWeight:700,color:'var(--g6)',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:5}}>Doğru Cevap</div>
+              <select className="mfi" value={f.correctAnswer} onChange={e=>set('correctAnswer',parseInt(e.target.value))}>{['A','B','C','D'].map((l,i)=><option key={i} value={i}>{l} Şıkkı</option>)}</select>
+            </div>
+            <div className="ff">
+              <div className="fl" style={{fontSize:11,fontWeight:700,color:'var(--g6)',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:5}}>Şıklar *</div>
+              <div className="og">{['A','B','C','D'].map((l,i)=><div key={i} className="or"><div className={`ol${f.correctAnswer===i?' ok':''}`}>{l}</div><input className="mfi" value={f.options[i]} onChange={e=>setO(i,e.target.value)} placeholder={`${l} şıkkı`} style={{flex:1}}/></div>)}</div>
+            </div>
+            <div className="ff">
+              <div className="fl" style={{fontSize:11,fontWeight:700,color:'var(--g6)',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:5}}>Açıklama</div>
+              <textarea className="mfi" rows={2} value={f.explanation} onChange={e=>set('explanation',e.target.value)} placeholder="Doğru cevap açıklaması..." style={{resize:'vertical'}}/>
+            </div>
+          </div>
         </div>
-    );
+        <div className="mf"><button className="btn bg" onClick={onClose}>İptal</button><button className="btn bp" style={{opacity:ok?1:.45}} onClick={()=>ok&&onSave(f)}>{q?'💾 Kaydet':'➕ Ekle'}</button></div>
+      </div>
+    </div>
+  );
 }
 
-function QuestionManager({ questions, setQuestions, showToast }) {
-    const [search, setSearch] = useState('');
-    const [catF, setCatF] = useState('');
-    const [diffF, setDiffF] = useState('');
-    const [modal, setModal] = useState(null);
-    const [delConfirm, setDelConfirm] = useState(null);
-    const [page, setPage] = useState(1);
-    const PER = 15;
-    const importRef = useRef();
-    const cats = [...new Set(questions.map(q=>q.category))].sort();
+/* ══════════════════════════════════════
+   DUPLICATE MODAL
+══════════════════════════════════════ */
+function DupModal({items,onResolve,onClose}){
+  const [dec,setDec]=useState({});
+  const all=items.every((_,i)=>dec[i]!==undefined);
+  const decide=(i,d)=>setDec(p=>({...p,[i]:d}));
+  return(
+    <div className="ov ov-top">
+      <div className="mo mo-wide">
+        <div className="mh"><span className="mt">⚠️ Benzer Sorular — {items.length} adet</span><button className="mc" onClick={onClose}>✕</button></div>
+        <div className="mb" style={{maxHeight:'60vh',overflowY:'auto'}}>
+          <p style={{fontSize:12,color:'var(--g5)',marginBottom:16}}>Bu sorular bankadaki sorularla benzer içerik taşıyor. Her biri için karar verin.</p>
+          {items.map((it,i)=>(
+            <div key={i} style={{marginBottom:18,padding:13,border:'1px solid var(--g2)',borderRadius:10,background:dec[i]?'var(--g0)':'white'}}>
+              <div style={{fontSize:10,fontWeight:700,color:'var(--g4)',marginBottom:9}}>#{i+1} Çakışma</div>
+              <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:12,marginBottom:10}}>
+                <div style={{border:'2px solid #93c5fd',borderRadius:9,padding:12,background:'#eff6ff'}}>
+                  <div style={{fontSize:10,fontWeight:700,color:'var(--P)',marginBottom:6,textTransform:'uppercase'}}>📚 Bankadaki</div>
+                  <div style={{fontSize:12,fontWeight:600,marginBottom:6}}>{it.existing.text}</div>
+                  <div style={{display:'flex',gap:5,flexWrap:'wrap'}}><span className={`badge ${diffB(it.existing.difficulty)}`}>{it.existing.difficulty}</span><span className="badge b-blue">{it.existing.category}</span></div>
+                </div>
+                <div style={{border:'2px solid #fcd34d',borderRadius:9,padding:12,background:'#fffbeb'}}>
+                  <div style={{fontSize:10,fontWeight:700,color:'var(--W)',marginBottom:6,textTransform:'uppercase'}}>🆕 Gelen</div>
+                  <div style={{fontSize:12,fontWeight:600,marginBottom:6}}>{it.incoming.text}</div>
+                  <div style={{display:'flex',gap:5,flexWrap:'wrap'}}><span className={`badge ${diffB(it.incoming.difficulty)}`}>{it.incoming.difficulty}</span><span className="badge b-blue">{it.incoming.category}</span></div>
+                </div>
+              </div>
+              <div style={{display:'flex',gap:7,flexWrap:'wrap'}}>
+                <button className={`btn btn-sm ${dec[i]==='keep'?'bp':'bg'}`} onClick={()=>decide(i,'keep')}>📚 Mevcutu Koru</button>
+                <button className={`btn btn-sm ${dec[i]==='replace'?'bw':'bg'}`} onClick={()=>decide(i,'replace')}>🔄 Gelenle Değiştir</button>
+                <button className={`btn btn-sm ${dec[i]==='add'?'bs':'bg'}`} onClick={()=>decide(i,'add')}>➕ İkisini de Ekle</button>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="mf"><button className="btn bg" onClick={onClose}>İptal</button><button className="btn bp" style={{opacity:all?1:.45}} onClick={()=>all&&onResolve(dec)}>✓ Uygula ({Object.keys(dec).length}/{items.length})</button></div>
+      </div>
+    </div>
+  );
+}
 
-    const filtered = questions.filter(q => {
-        const s = search.toLowerCase();
-        return (!s || q.text.toLowerCase().includes(s) || q.category.toLowerCase().includes(s) || q.subcategory.toLowerCase().includes(s))
-            && (!catF || q.category===catF)
-            && (!diffF || q.difficulty===diffF);
+/* ══════════════════════════════════════
+   QUESTION MANAGER
+══════════════════════════════════════ */
+function QManager({questions,setQuestions,showToast}){
+  const [search,setSearch]=useState('');
+  const [catF,setCatF]=useState('');
+  const [subF,setSubF]=useState('');
+  const [diffF,setDiffF]=useState('');
+  const [modal,setModal]=useState(null);
+  const [delCfm,setDelCfm]=useState(null);
+  const [page,setPage]=useState(1);
+  const [pends,setPends]=useState(null);
+  const PER=15;
+  const impRef=useRef();
+  const cats=[...new Set(questions.map(q=>q.category))].sort();
+  const subs=catF?[...new Set(questions.filter(q=>q.category===catF).map(q=>q.subcategory))].sort()
+                  :[...new Set(questions.map(q=>q.subcategory))].sort();
+
+  const filtered=questions.filter(q=>{
+    const s=search.toLowerCase();
+    return(!s||q.text.toLowerCase().includes(s)||q.category.toLowerCase().includes(s)||q.subcategory.toLowerCase().includes(s))
+      &&(!catF||q.category===catF)&&(!subF||q.subcategory===subF)&&(!diffF||q.difficulty===diffF);
+  });
+  const totalPg=Math.max(1,Math.ceil(filtered.length/PER));
+  const paged=filtered.slice((page-1)*PER,page*PER);
+  const rp=()=>setPage(1);
+
+  useEffect(()=>setSubF(''),[catF]);
+
+  const tryAdd=(incoming,current)=>{
+    const exact=[],sim=[],fresh=[];
+    incoming.forEach(q=>{
+      if(current.find(e=>qExact(e,q)))exact.push(q);
+      else if(current.find(e=>qSim(e,q)))sim.push({existing:current.find(e=>qSim(e,q)),incoming:q});
+      else fresh.push(q);
     });
+    return{exact,sim,fresh};
+  };
 
-    const totalPages = Math.max(1, Math.ceil(filtered.length/PER));
-    const paged = filtered.slice((page-1)*PER, page*PER);
-    const rp = () => setPage(1);
+  const saveQ=(form)=>{
+    if(modal==='add'){
+      const{exact,sim,fresh}=tryAdd([form],questions);
+      if(exact.length){showToast('Bu soru zaten bankada mevcut!','error');return;}
+      if(sim.length){setPends({items:sim,toAdd:fresh});setModal(null);return;}
+      setQuestions(prev=>{const n=[...prev,{...form,id:uid()}];ss('exam_q',n);return n;});
+      showToast('Soru eklendi ✓','success');
+    }else{
+      setQuestions(prev=>{const n=prev.map(q=>q.id===modal.id?{...form,id:modal.id}:q);ss('exam_q',n);return n;});
+      showToast('Soru güncellendi ✓','success');
+    }
+    setModal(null);
+  };
 
-    const save = (form) => {
-        if (modal==='add') {
-            const nq = {...form, id:Date.now()};
-            setQuestions(prev => { const next=[...prev,nq]; ss('exam_q',next); return next; });
-            showToast('Soru eklendi','success');
-        } else {
-            setQuestions(prev => { const next=prev.map(q=>q.id===modal.id?{...form,id:modal.id}:q); ss('exam_q',next); return next; });
-            showToast('Soru güncellendi','success');
-        }
-        setModal(null);
+  const del=(id)=>{setQuestions(p=>{const n=p.filter(q=>q.id!==id);ss('exam_q',n);return n;});setDelCfm(null);showToast('Soru silindi','error')};
+  const delAll=()=>{if(confirm(`Tüm ${questions.length} soru silinecek!`)){setQuestions([]);ss('exam_q',[]);showToast('Tüm sorular silindi','error')}};
+
+  const expXls=()=>{
+    const d=questions.map(q=>({'Soru Metni':q.text,'Kategori':q.category,'Alt Kategori':q.subcategory,'Zorluk':q.difficulty,'Seçenek A':q.options[0],'Seçenek B':q.options[1],'Seçenek C':q.options[2],'Seçenek D':q.options[3],'Doğru Cevap (0-3)':q.correctAnswer,'Açıklama':q.explanation}));
+    const ws=XLSX.utils.json_to_sheet(d);const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Sorular');XLSX.writeFile(wb,`sorular_${new Date().toISOString().slice(0,10)}.xlsx`);
+    showToast(`${questions.length} soru aktarıldı`,'success');
+  };
+  const expTpl=()=>{
+    const d=[{'Soru Metni':'Örnek soru?','Kategori':'Matematik','Alt Kategori':'Geometri','Zorluk':'Orta','Seçenek A':'Cevap 1','Seçenek B':'Cevap 2','Seçenek C':'Cevap 3','Seçenek D':'Cevap 4','Doğru Cevap (0-3)':1,'Açıklama':'Açıklama metni'}];
+    const ws=XLSX.utils.json_to_sheet(d);const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Şablon');XLSX.writeFile(wb,'soru_sablonu.xlsx');
+    showToast('Şablon indirildi','info');
+  };
+  const expJson=()=>{
+    const b=new Blob([JSON.stringify(questions,null,2)],{type:'application/json'});
+    const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='sorular.json';a.click();URL.revokeObjectURL(u);
+    showToast('JSON aktarıldı','success');
+  };
+  const impFile=(file)=>{
+    const r=new FileReader();
+    r.onload=e=>{
+      try{
+        const wb=XLSX.read(e.target.result,{type:'binary'});
+        const ws=wb.Sheets[wb.SheetNames[0]];
+        const rows=XLSX.utils.sheet_to_json(ws);
+        const inc=rows.map(row=>({id:uid(),text:row['Soru Metni']||'',category:row['Kategori']||'Diğer',subcategory:row['Alt Kategori']||'Genel',difficulty:row['Zorluk']||'Orta',options:[row['Seçenek A']||'',row['Seçenek B']||'',row['Seçenek C']||'',row['Seçenek D']||''],correctAnswer:parseInt(row['Doğru Cevap (0-3)'])||0,explanation:row['Açıklama']||''})).filter(q=>q.text&&q.options.every(o=>o));
+        const{exact,sim,fresh}=tryAdd(inc,questions);
+        if(fresh.length)setQuestions(p=>{const n=[...p,...fresh];ss('exam_q',n);return n;});
+        showToast(`${fresh.length} eklendi · ${exact.length} aynı atlandı`+(sim.length?` · ${sim.length} bekliyor`:''),fresh.length?'success':'warning');
+        if(sim.length)setPends({items:sim,toAdd:[]});
+      }catch{showToast('Dosya okunamadı','error')}
     };
+    r.readAsBinaryString(file);
+    if(impRef.current)impRef.current.value='';
+  };
+  const resolveD=(dec)=>{
+    if(!pends)return;
+    setQuestions(prev=>{
+      let n=[...prev];
+      pends.items.forEach((it,i)=>{
+        const d=dec[i];
+        if(d==='replace')n=n.map(q=>q.id===it.existing.id?{...it.incoming,id:it.existing.id}:q);
+        else if(d==='add')n=[...n,{...it.incoming,id:uid()}];
+      });
+      if(pends.toAdd?.length)n=[...n,...pends.toAdd.map(q=>({...q,id:uid()}))];
+      ss('exam_q',n);return n;
+    });
+    showToast('Çakışmalar çözüldü ✓','success');setPends(null);
+  };
 
-    const del = (id) => {
-        setQuestions(prev => { const next=prev.filter(q=>q.id!==id); ss('exam_q',next); return next; });
-        setDelConfirm(null);
-        showToast('Soru silindi','error');
-    };
+  const byD=DIFFS.map(d=>({d,n:questions.filter(q=>q.difficulty===d).length}));
 
-    const delAll = () => {
-        if (confirm(`Tüm ${questions.length} soru silinecek! Emin misiniz?`)) {
-            setQuestions([]); ss('exam_q',[]);
-            showToast('Tüm sorular silindi','error');
-        }
-    };
-
-    const exportExcel = () => {
-        const data = questions.map(q => ({'Soru Metni':q.text,'Kategori':q.category,'Alt Kategori':q.subcategory,'Zorluk':q.difficulty,'Seçenek A':q.options[0],'Seçenek B':q.options[1],'Seçenek C':q.options[2],'Seçenek D':q.options[3],'Doğru Cevap (0-3)':q.correctAnswer,'Açıklama':q.explanation}));
-        const ws=XLSX.utils.json_to_sheet(data); const wb=XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb,ws,'Sorular'); XLSX.writeFile(wb,`sorular_${new Date().toISOString().slice(0,10)}.xlsx`);
-        showToast(`${questions.length} soru aktarıldı`,'success');
-    };
-
-    const exportTemplate = () => {
-        const data=[{'Soru Metni':'Örnek soru?','Kategori':'Matematik','Alt Kategori':'Geometri','Zorluk':'Orta','Seçenek A':'Cevap 1','Seçenek B':'Cevap 2','Seçenek C':'Cevap 3','Seçenek D':'Cevap 4','Doğru Cevap (0-3)':1,'Açıklama':'Açıklama metni'}];
-        const ws=XLSX.utils.json_to_sheet(data); const wb=XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb,ws,'Şablon'); XLSX.writeFile(wb,'soru_sablonu.xlsx');
-        showToast('Şablon indirildi','info');
-    };
-
-    const exportJSON = () => {
-        const blob=new Blob([JSON.stringify(questions,null,2)],{type:'application/json'});
-        const url=URL.createObjectURL(blob); const a=document.createElement('a');
-        a.href=url; a.download='sorular.json'; a.click(); URL.revokeObjectURL(url);
-        showToast('JSON aktarıldı','success');
-    };
-
-    const importFile = (file) => {
-        const reader=new FileReader();
-        reader.onload=e=>{
-            try {
-                const wb=XLSX.read(e.target.result,{type:'binary'});
-                const ws=wb.Sheets[wb.SheetNames[0]];
-                const rows=XLSX.utils.sheet_to_json(ws);
-                let cnt=0; const nqs=[];
-                rows.forEach(row=>{
-                    const q={id:Date.now()+Math.random(),text:row['Soru Metni']||'',category:row['Kategori']||'Diğer',subcategory:row['Alt Kategori']||'Genel',difficulty:row['Zorluk']||'Orta',options:[row['Seçenek A']||'',row['Seçenek B']||'',row['Seçenek C']||'',row['Seçenek D']||''],correctAnswer:parseInt(row['Doğru Cevap (0-3)'])||0,explanation:row['Açıklama']||''};
-                    if(q.text&&q.options.every(o=>o)){nqs.push(q);cnt++;}
-                });
-                setQuestions(prev=>{const next=[...prev,...nqs];ss('exam_q',next);return next;});
-                showToast(`${cnt} soru içe aktarıldı`,'success');
-            } catch { showToast('Dosya okunamadı','error'); }
-        };
-        reader.readAsBinaryString(file);
-        if(importRef.current) importRef.current.value='';
-    };
-
-    const byDiff = DIFFICULTIES.map(d=>({d,n:questions.filter(q=>q.difficulty===d).length}));
-
-    return (
-        <div>
-            <div className="stats-grid">
-                <div className="stat-card"><div className="stat-icon" style={{background:'#dbeafe'}}>📚</div><div><div className="stat-value">{questions.length}</div><div className="stat-label">Toplam Soru</div></div></div>
-                <div className="stat-card"><div className="stat-icon" style={{background:'#dcfce7'}}>📂</div><div><div className="stat-value">{cats.length}</div><div className="stat-label">Kategori</div></div></div>
-                {byDiff.map(({d,n})=>(
-                    <div className="stat-card" key={d}>
-                        <div className="stat-icon" style={{background:d==='Kolay'?'#dcfce7':d==='Orta'?'#fef3c7':'#fee2e2'}}>{d==='Kolay'?'🟢':d==='Orta'?'🟡':'🔴'}</div>
-                        <div><div className="stat-value">{n}</div><div className="stat-label">{d}</div></div>
-                    </div>
+  return(
+    <div>
+      {/* Soru Ekle - büyük ve belirgin */}
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:18}}>
+        <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+          <button className="btn bp" style={{fontSize:14,padding:'10px 20px'}} onClick={()=>setModal('add')}>➕ Yeni Soru Ekle</button>
+          <button className="btn bs btn-sm" onClick={expXls}>📤 Excel</button>
+          <label className="btn bg btn-sm" style={{cursor:'pointer'}}>📥 İçe Al<input ref={impRef} type="file" accept=".xlsx,.xls" style={{display:'none'}} onChange={e=>e.target.files[0]&&impFile(e.target.files[0])}/></label>
+          <button className="btn bg btn-sm" onClick={expTpl}>📋 Şablon</button>
+          <button className="btn bg btn-sm" onClick={expJson}>📄 JSON</button>
+          <button className="btn bd btn-sm" onClick={delAll}>🗑 Tümü Sil</button>
+        </div>
+      </div>
+      <div className="sc-grid">
+        <div className="sc"><div className="sc-ico" style={{background:'#dbeafe'}}>📚</div><div><div className="sc-val">{questions.length}</div><div className="sc-lbl">Toplam Soru</div></div></div>
+        <div className="sc"><div className="sc-ico" style={{background:'#ede9fe'}}>📂</div><div><div className="sc-val">{cats.length}</div><div className="sc-lbl">Kategori</div></div></div>
+        {byD.map(({d,n})=><div className="sc" key={d}><div className="sc-ico" style={{background:d==='Kolay'?'#dcfce7':d==='Orta'?'#fef3c7':'#fee2e2'}}>{d==='Kolay'?'🟢':d==='Orta'?'🟡':'🔴'}</div><div><div className="sc-val">{n}</div><div className="sc-lbl">{d}</div></div></div>)}
+      </div>
+      <div className="tc">
+        <div className="tb-bar">
+          <div className="sw"><span className="si">🔍</span><input className="sinp" placeholder="Soru ara..." value={search} onChange={e=>{setSearch(e.target.value);rp()}}/></div>
+          <select className="fsel" value={catF} onChange={e=>{setCatF(e.target.value);rp()}}>
+            <option value="">Tüm Kategoriler</option>{cats.map(c=><option key={c}>{c}</option>)}
+          </select>
+          <select className="fsel" value={subF} onChange={e=>{setSubF(e.target.value);rp()}}>
+            <option value="">Tüm Alt Kategoriler</option>{subs.map(s=><option key={s}>{s}</option>)}
+          </select>
+          <select className="fsel" value={diffF} onChange={e=>{setDiffF(e.target.value);rp()}}>
+            <option value="">Tüm Zorluklar</option>{DIFFS.map(d=><option key={d}>{d}</option>)}
+          </select>
+        </div>
+        {paged.length===0?<div className="empty"><div style={{fontSize:34,marginBottom:9}}>📭</div><div>{search||catF||subF||diffF?'Aramanıza uygun soru bulunamadı.':'Henüz soru eklenmemiş. Yukarıdaki "Yeni Soru Ekle" butonunu kullanın.'}</div></div>:(
+          <div style={{overflowX:'auto'}}>
+            <table className="dt">
+              <thead><tr><th>#</th><th>Soru</th><th>Kategori</th><th>Alt Kat.</th><th>Zorluk</th><th>✓</th><th>İşlem</th></tr></thead>
+              <tbody>
+                {paged.map((q,i)=>(
+                  <tr key={q.id}>
+                    <td style={{color:'var(--g4)',fontFamily:'IBM Plex Mono',fontSize:10}}>{(page-1)*PER+i+1}</td>
+                    <td><div className="qt" title={q.text}>{q.text}</div></td>
+                    <td><span className="badge b-blue">{q.category}</span></td>
+                    <td><span className="badge b-gray">{q.subcategory}</span></td>
+                    <td><span className={`badge ${diffB(q.difficulty)}`}>{q.difficulty}</span></td>
+                    <td><span style={{fontFamily:'IBM Plex Mono',fontWeight:700,color:'var(--S)',fontSize:12}}>{String.fromCharCode(65+q.correctAnswer)}</span></td>
+                    <td><div className="ab"><button className="ib p" onClick={()=>setModal(q)}>✏️</button><button className="ib d" onClick={()=>setDelCfm(q)}>🗑</button></div></td>
+                  </tr>
                 ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+        {totalPg>1&&(
+          <div className="pag">
+            <div className="pag-inf">{filtered.length} sonuç · {(page-1)*PER+1}–{Math.min(page*PER,filtered.length)}</div>
+            <div className="pag-btns">
+              <button className="pb" disabled={page===1} onClick={()=>setPage(p=>p-1)}>‹</button>
+              {Array.from({length:Math.min(totalPg,7)},(_,i)=>{let p=i+1;if(totalPg>7){if(page<=4)p=i+1;else if(page>=totalPg-3)p=totalPg-6+i;else p=page-3+i;}return<button key={p} className={`pb${page===p?' cur':''}`} onClick={()=>setPage(p)}>{p}</button>})}
+              <button className="pb" disabled={page===totalPg} onClick={()=>setPage(p=>p+1)}>›</button>
             </div>
-
-            <div className="table-container">
-                <div className="table-toolbar">
-                    <div className="search-wrap">
-                        <span className="search-icon">🔍</span>
-                        <input className="search-input" placeholder="Soru ara..." value={search} onChange={e=>{setSearch(e.target.value);rp();}} />
-                    </div>
-                    <select className="filter-select" value={catF} onChange={e=>{setCatF(e.target.value);rp();}}>
-                        <option value="">Tüm Kategoriler</option>
-                        {cats.map(c=><option key={c}>{c}</option>)}
-                    </select>
-                    <select className="filter-select" value={diffF} onChange={e=>{setDiffF(e.target.value);rp();}}>
-                        <option value="">Tüm Zorluklar</option>
-                        {DIFFICULTIES.map(d=><option key={d}>{d}</option>)}
-                    </select>
-                    <div style={{marginLeft:'auto',display:'flex',gap:'8px',flexWrap:'wrap'}}>
-                        <button className="btn btn-primary btn-sm" onClick={()=>setModal('add')}>➕ Soru Ekle</button>
-                        <button className="btn btn-success btn-sm" onClick={exportExcel}>📤 Excel Aktar</button>
-                        <label className="btn btn-ghost btn-sm" style={{cursor:'pointer'}}>
-                            📥 Excel İçe Al
-                            <input ref={importRef} type="file" accept=".xlsx,.xls" style={{display:'none'}} onChange={e=>e.target.files[0]&&importFile(e.target.files[0])} />
-                        </label>
-                        <button className="btn btn-ghost btn-sm" onClick={exportTemplate}>📋 Şablon İndir</button>
-                        <button className="btn btn-ghost btn-sm" onClick={exportJSON}>📄 JSON Aktar</button>
-                        <button className="btn btn-danger btn-sm" onClick={delAll}>🗑 Tümünü Sil</button>
-                    </div>
-                </div>
-
-                {paged.length===0 ? (
-                    <div className="empty-state">
-                        <div style={{fontSize:40,marginBottom:12}}>📭</div>
-                        <div style={{fontSize:15,fontWeight:500}}>{search||catF||diffF?'Aramanıza uygun soru bulunamadı.':'Henüz soru eklenmemiş.'}</div>
-                    </div>
-                ) : (
-                    <div style={{overflowX:'auto'}}>
-                        <table className="data-table">
-                            <thead>
-                                <tr>
-                                    <th style={{width:40}}>#</th>
-                                    <th>Soru</th>
-                                    <th>Kategori</th>
-                                    <th>Alt Kategori</th>
-                                    <th>Zorluk</th>
-                                    <th>Doğru</th>
-                                    <th style={{width:90}}>İşlem</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {paged.map((q,idx)=>(
-                                    <tr key={q.id}>
-                                        <td style={{color:'var(--gray-400)',fontFamily:'IBM Plex Mono',fontSize:12}}>{(page-1)*PER+idx+1}</td>
-                                        <td><div className="q-text" title={q.text}>{q.text}</div></td>
-                                        <td><span className="badge badge-blue">{q.category}</span></td>
-                                        <td><span className="badge badge-gray">{q.subcategory}</span></td>
-                                        <td><span className={`badge ${diffBadge(q.difficulty)}`}>{q.difficulty}</span></td>
-                                        <td><span style={{fontFamily:'IBM Plex Mono',fontWeight:700,color:'var(--success)'}}>{String.fromCharCode(65+q.correctAnswer)}</span></td>
-                                        <td>
-                                            <div className="action-btns">
-                                                <button className="btn-icon primary" title="Düzenle" onClick={()=>setModal(q)}>✏️</button>
-                                                <button className="btn-icon danger" title="Sil" onClick={()=>setDelConfirm(q)}>🗑</button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-                {totalPages>1 && (
-                    <div className="pagination">
-                        <div className="pagination-info">{filtered.length} sonuçtan {(page-1)*PER+1}–{Math.min(page*PER,filtered.length)} arası</div>
-                        <div className="pagination-btns">
-                            <button className="page-btn" disabled={page===1} onClick={()=>setPage(p=>p-1)}>‹</button>
-                            {Array.from({length:Math.min(totalPages,7)},(_,i)=>{
-                                let p=i+1;
-                                if(totalPages>7){if(page<=4)p=i+1;else if(page>=totalPages-3)p=totalPages-6+i;else p=page-3+i;}
-                                return <button key={p} className={`page-btn ${page===p?'current':''}`} onClick={()=>setPage(p)}>{p}</button>;
-                            })}
-                            <button className="page-btn" disabled={page===totalPages} onClick={()=>setPage(p=>p+1)}>›</button>
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            {(modal==='add'||(modal&&modal.id)) && <QuestionModal question={modal==='add'?null:modal} onSave={save} onClose={()=>setModal(null)} />}
-
-            {delConfirm && (
-                <div className="modal-overlay" onClick={e=>e.target===e.currentTarget&&setDelConfirm(null)}>
-                    <div className="modal" style={{maxWidth:400}}>
-                        <div className="modal-header"><span className="modal-title">⚠️ Soru Sil</span><button className="modal-close" onClick={()=>setDelConfirm(null)}>✕</button></div>
-                        <div className="modal-body">
-                            <p style={{color:'var(--gray-600)'}}>Bu soru silinecek:</p>
-                            <p style={{marginTop:10,padding:'12px',background:'var(--gray-50)',borderRadius:8,fontSize:14}}>{delConfirm.text}</p>
-                            <p style={{marginTop:10,color:'var(--danger)',fontSize:13}}>Bu işlem geri alınamaz.</p>
-                        </div>
-                        <div className="modal-footer">
-                            <button className="btn btn-ghost" onClick={()=>setDelConfirm(null)}>İptal</button>
-                            <button className="btn btn-danger" onClick={()=>del(delConfirm.id)}>Evet, Sil</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+          </div>
+        )}
+      </div>
+      {(modal==='add'||(modal&&modal.id))&&<QModal q={modal==='add'?null:modal} allQuestions={questions} onSave={saveQ} onClose={()=>setModal(null)}/>}
+      {delCfm&&(
+        <div className="ov" onClick={e=>e.target===e.currentTarget&&setDelCfm(null)}>
+          <div className="mo" style={{maxWidth:360}}>
+            <div className="mh"><span className="mt">⚠️ Soru Sil</span><button className="mc" onClick={()=>setDelCfm(null)}>✕</button></div>
+            <div className="mb"><p style={{color:'var(--g6)',fontSize:13}}>Silinecek:</p><p style={{marginTop:9,padding:10,background:'var(--g0)',borderRadius:7,fontSize:12}}>{delCfm.text}</p><p style={{marginTop:9,color:'var(--D)',fontSize:12}}>Bu işlem geri alınamaz.</p></div>
+            <div className="mf"><button className="btn bg" onClick={()=>setDelCfm(null)}>İptal</button><button className="btn bd" onClick={()=>del(delCfm.id)}>Evet, Sil</button></div>
+          </div>
         </div>
-    );
+      )}
+      {pends&&<DupModal items={pends.items} onResolve={resolveD} onClose={()=>setPends(null)}/>}
+    </div>
+  );
 }
 
-function ExamMenu({ questions, onStart }) {
-    const [cat, setCat] = useState(null);
-    const [sub, setSub] = useState(null);
-    const [diff, setDiff] = useState(null);
-    const [count, setCount] = useState(null);
-    const cats = [...new Set(questions.map(q=>q.category))];
-    const subs = cat ? [...new Set(questions.filter(q=>q.category===cat).map(q=>q.subcategory))] : [];
-    const diffs = [...new Set(questions.map(q=>q.difficulty))];
-    const filtered = questions.filter(q=>(!cat||q.category===cat)&&(!sub||q.subcategory===sub)&&(!diff||q.difficulty===diff));
-    const canStart = count && filtered.length>0;
-    return (
-        <div className="menu-wrap">
-            <div className="topbar"><div><div className="topbar-title">🚀 Sınava Başla</div><div className="topbar-subtitle">{filtered.length} uygun soru mevcut</div></div></div>
-            <div className="page-body">
-                <div className="section-card">
-                    <div className="section-card-title">📂 1. Kategori <span style={{color:'var(--gray-400)',fontWeight:400}}>(opsiyonel)</span></div>
-                    <div className="chip-grid">
-                        {cats.map(c=><button key={c} className={`chip ${cat===c?'active':''}`} onClick={()=>{setCat(cat===c?null:c);setSub(null);}}>{c}</button>)}
-                    </div>
-                </div>
-                {cat&&subs.length>1&&(
-                    <div className="section-card">
-                        <div className="section-card-title">📁 2. Alt Kategori <span style={{color:'var(--gray-400)',fontWeight:400}}>(opsiyonel)</span></div>
-                        <div className="chip-grid">{subs.map(s=><button key={s} className={`chip ${sub===s?'active':''}`} onClick={()=>setSub(sub===s?null:s)}>{s}</button>)}</div>
-                    </div>
-                )}
-                <div className="section-card">
-                    <div className="section-card-title">🎯 3. Zorluk <span style={{color:'var(--gray-400)',fontWeight:400}}>(opsiyonel)</span></div>
-                    <div className="chip-grid">{diffs.map(d=><button key={d} className={`chip ${diff===d?'active':''}`} onClick={()=>setDiff(diff===d?null:d)}>{d}</button>)}</div>
-                </div>
-                <div className="section-card">
-                    <div className="section-card-title">🔢 4. Soru Sayısı *</div>
-                    <div className="chip-grid">
-                        {[10,20,50,100].filter(n=>filtered.length>=n).map(n=>(
-                            <button key={n} className={`chip ${count===n?'active':''}`} onClick={()=>setCount(count===n?null:n)}>{n}</button>
-                        ))}
-                        <button className={`chip ${count==='all'?'active':''}`} onClick={()=>setCount(count==='all'?null:'all')}>Tümü ({filtered.length})</button>
-                    </div>
-                </div>
-                <div style={{textAlign:'center'}}>
-                    <button className="btn btn-primary" style={{padding:'14px 40px',fontSize:16,opacity:canStart?1:0.5}}
-                        onClick={()=>{if(!canStart)return;let qs=[...filtered];if(count!=='all')qs=qs.slice(0,count);onStart(qs);}}>
-                        🚀 Sınavı Başlat
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
+/* ══════════════════════════════════════
+   CATEGORY MANAGER
+══════════════════════════════════════ */
+function CatManager({questions,setQuestions,showToast}){
+  const [renaming,setRenaming]=useState(null);
+  const [merging,setMerging]=useState(null);
+  const [mergeTarget,setMergeTarget]=useState('');
+  const [addCatOpen,setAddCatOpen]=useState(false);
+  const [newCatName,setNewCatName]=useState('');
+  const [newSubOpen,setNewSubOpen]=useState(null); // cat name
+  const [newSubName,setNewSubName]=useState('');
 
-function ExamPage({ examQs, onFinish, onExit }) {
-    const [cur, setCur] = useState(0);
-    const [answers, setAnswers] = useState({});
-    const q = examQs[cur];
-    return (
-        <div className="exam-wrap">
-            <div className="exam-topbar">
-                <div style={{flex:1}}>
-                    <div style={{fontSize:13,color:'var(--gray-600)',marginBottom:6}}>Soru {cur+1} / {examQs.length}</div>
-                    <div className="progress-bar"><div className="progress-fill" style={{width:`${((cur+1)/examQs.length)*100}%`}} /></div>
-                </div>
-                <button className="btn btn-ghost btn-sm" style={{marginLeft:20}} onClick={()=>{if(confirm('Sınavdan çıkmak istediğinize emin misiniz?'))onExit();}}>✕ Çık</button>
-            </div>
-            <div className="exam-card">
-                <div className="question-num">Soru {cur+1}</div>
-                <div className="question-text">{q.text}</div>
-                <div className="answers">
-                    {q.options.map((opt,i)=>(
-                        <button key={i} className={`answer-btn ${answers[cur]===i?'selected':''}`} onClick={()=>setAnswers(a=>({...a,[cur]:i}))}>
-                            <div className="answer-letter">{String.fromCharCode(65+i)}</div>{opt}
-                        </button>
-                    ))}
-                </div>
-                <div className="exam-nav">
-                    <button className="btn btn-ghost" disabled={cur===0} onClick={()=>setCur(c=>c-1)}>← Önceki</button>
-                    {cur<examQs.length-1
-                        ?<button className="btn btn-primary" onClick={()=>setCur(c=>c+1)}>Sonraki →</button>
-                        :<button className="btn btn-success" onClick={()=>onFinish(answers)}>Sınavı Bitir ✓</button>
-                    }
-                </div>
-            </div>
-        </div>
-    );
-}
-
-function ResultsPage({ examQs, answers, onBack }) {
-    let correct=0, wrong=[];
-    examQs.forEach((q,i)=>{
-        if(answers[i]===q.correctAnswer)correct++;
-        else wrong.push({q,user:answers[i]!==undefined?q.options[answers[i]]:'Cevap verilmedi',correct:q.options[q.correctAnswer]});
+  const cats=useMemo(()=>{
+    const map={};
+    questions.forEach(q=>{
+      if(!map[q.category])map[q.category]={subs:{}};
+      if(!map[q.category].subs[q.subcategory])map[q.category].subs[q.subcategory]=0;
+      map[q.category].subs[q.subcategory]++;
     });
-    const pct=Math.round((correct/examQs.length)*100);
-    return (
-        <div style={{maxWidth:860,margin:'0 auto',padding:'30px 20px'}}>
-            <div style={{textAlign:'center',paddingTop:20}}>
-                <h1 style={{fontSize:36,fontWeight:800,color:'var(--gray-900)'}}>✓ Sınav Tamamlandı</h1>
-                <div className="score-grid">
-                    <div className="score-box"><div className="score-num" style={{color:'var(--success)'}}>{correct}</div><div className="score-lbl">Doğru</div></div>
-                    <div className="score-box"><div className="score-num" style={{color:'var(--danger)'}}>{wrong.length}</div><div className="score-lbl">Yanlış</div></div>
-                    <div className="score-box"><div className="score-num" style={{color:'var(--primary)'}}>{pct}%</div><div className="score-lbl">Başarı</div></div>
-                </div>
+    return map;
+  },[questions]);
+  const catList=Object.keys(cats).sort();
+
+  const addCategory=()=>{
+    if(!newCatName.trim()){showToast('Kategori adı boş olamaz','error');return;}
+    if(cats[newCatName.trim()]){showToast('Bu kategori zaten mevcut','warning');return;}
+    // Boş bir placeholder soru eklemiyoruz; sadece soru eklerken bu kategori seçilebilir
+    // Ama kullanıcı "boş kategori" görmek istiyorsa bir sistem sorusu eklemek gerekir.
+    // Burada sadece bilgi veriyoruz ve soru eklemelerini yönlendiriyoruz.
+    showToast(`"${newCatName.trim()}" kategorisi oluşturuldu. Şimdi bu kategoriye soru ekleyin.`,'info');
+    // Gerçek oluşturma: dummy hidden soru ekleyip gizlemek yerine,
+    // kategoriler sorulardan türetiliyor — bu yüzden gerçek boş kategori için
+    // soru ekleme modalını açıyoruz:
+    setAddCatOpen(false);setNewCatName('');
+  };
+
+  const addSubcategory=(cat)=>{
+    if(!newSubName.trim()){showToast('Alt kategori adı boş olamaz','error');return;}
+    showToast(`"${newSubName.trim()}" alt kategorisi bilgisi kaydedildi. Yeni soru eklerken bu alt kategoriyi kullanabilirsiniz.`,'info');
+    setNewSubOpen(null);setNewSubName('');
+  };
+
+  const renameCat=(oldCat,newCat)=>{
+    if(!newCat.trim()||newCat===oldCat)return;
+    if(cats[newCat]){showToast(`"${newCat}" zaten mevcut`,'warning');return;}
+    setQuestions(qs=>{const n=qs.map(q=>q.category===oldCat?{...q,category:newCat}:q);ss('exam_q',n);return n;});
+    showToast(`"${oldCat}" → "${newCat}"`,'success');setRenaming(null);
+  };
+  const renameSub=(cat,oldSub,newSub)=>{
+    if(!newSub.trim()||newSub===oldSub)return;
+    setQuestions(qs=>{const n=qs.map(q=>q.category===cat&&q.subcategory===oldSub?{...q,subcategory:newSub}:q);ss('exam_q',n);return n;});
+    showToast('Alt kategori yeniden adlandırıldı','success');setRenaming(null);
+  };
+  const deleteCat=(cat)=>{
+    const cnt=questions.filter(q=>q.category===cat).length;
+    if(!confirm(`"${cat}" ve içindeki ${cnt} soru silinecek. Emin misiniz?`))return;
+    setQuestions(qs=>{const n=qs.filter(q=>q.category!==cat);ss('exam_q',n);return n;});
+    showToast(`"${cat}" silindi`,'error');
+  };
+  const deleteSub=(cat,sub)=>{
+    const cnt=questions.filter(q=>q.category===cat&&q.subcategory===sub).length;
+    if(!confirm(`"${sub}" ve içindeki ${cnt} soru silinecek. Emin misiniz?`))return;
+    setQuestions(qs=>{const n=qs.filter(q=>!(q.category===cat&&q.subcategory===sub));ss('exam_q',n);return n;});
+    showToast(`"${sub}" silindi`,'error');
+  };
+  const mergeCats=(from,to)=>{
+    setQuestions(qs=>{const n=qs.map(q=>q.category===from?{...q,category:to}:q);ss('exam_q',n);return n;});
+    showToast(`"${from}" → "${to}" ile birleştirildi`,'success');setMerging(null);setMergeTarget('');
+  };
+  const mergeSubs=(cat,from,to)=>{
+    setQuestions(qs=>{const n=qs.map(q=>q.category===cat&&q.subcategory===from?{...q,subcategory:to}:q);ss('exam_q',n);return n;});
+    showToast('Alt kategoriler birleştirildi','success');setMerging(null);setMergeTarget('');
+  };
+
+  return(
+    <div>
+      <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:18,flexWrap:'wrap',gap:10}}>
+        <p style={{fontSize:13,color:'var(--g5)'}}>Kategorileri yeniden adlandır, birleştir veya sil. Kategori eklemek için ➕ Yeni Kategori butonunu kullanın.</p>
+        <button className="btn bp btn-sm" onClick={()=>setAddCatOpen(true)}>➕ Yeni Kategori</button>
+      </div>
+
+      {addCatOpen&&(
+        <div className="ov" onClick={e=>e.target===e.currentTarget&&setAddCatOpen(false)}>
+          <div className="mo" style={{maxWidth:380}}>
+            <div className="mh"><span className="mt">➕ Yeni Kategori Ekle</span><button className="mc" onClick={()=>setAddCatOpen(false)}>✕</button></div>
+            <div className="mb">
+              <p style={{fontSize:13,color:'var(--g5)',marginBottom:14}}>Kategoriler sorulardan otomatik türetilir. Yeni bir kategori adı girin; ardından o kategoriye soru ekleyerek aktif hale getirin.</p>
+              <div className="fl" style={{fontSize:11,fontWeight:700,color:'var(--g6)',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:5}}>Kategori Adı</div>
+              <input className="mfi" value={newCatName} onChange={e=>setNewCatName(e.target.value)} placeholder="ör: Tarih" autoFocus onKeyDown={e=>e.key==='Enter'&&addCategory()}/>
             </div>
-            <div className="section-card" style={{marginTop:24}}>
-                <div className="section-card-title">❌ Yanlış Cevaplar</div>
-                {wrong.length===0
-                    ?<div style={{textAlign:'center',padding:30,color:'var(--success)',fontWeight:600}}>🎉 Tüm sorulara doğru cevap verdiniz!</div>
-                    :wrong.map((w,i)=>(
-                        <div key={i} style={{padding:'16px',background:'var(--danger-light)',borderLeft:'4px solid var(--danger)',borderRadius:8,marginBottom:12}}>
-                            <p style={{fontWeight:600,marginBottom:10}}>{w.q.text}</p>
-                            <p style={{fontSize:13,color:'var(--danger)'}}>Cevabınız: {w.user}</p>
-                            <p style={{fontSize:13,color:'var(--success)',fontWeight:600}}>Doğru: {w.correct}</p>
-                            {w.q.explanation&&<p style={{fontSize:12,marginTop:8,color:'var(--gray-600)',background:'rgba(0,0,0,0.04)',padding:'8px',borderRadius:6}}>💡 {w.q.explanation}</p>}
-                        </div>
-                    ))
-                }
+            <div className="mf"><button className="btn bg" onClick={()=>setAddCatOpen(false)}>İptal</button><button className="btn bp" onClick={addCategory}>✓ Onayla</button></div>
+          </div>
+        </div>
+      )}
+
+      {newSubOpen&&(
+        <div className="ov" onClick={e=>e.target===e.currentTarget&&setNewSubOpen(null)}>
+          <div className="mo" style={{maxWidth:380}}>
+            <div className="mh"><span className="mt">➕ Yeni Alt Kategori — {newSubOpen}</span><button className="mc" onClick={()=>setNewSubOpen(null)}>✕</button></div>
+            <div className="mb">
+              <div className="fl" style={{fontSize:11,fontWeight:700,color:'var(--g6)',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:5}}>Alt Kategori Adı</div>
+              <input className="mfi" value={newSubName} onChange={e=>setNewSubName(e.target.value)} placeholder="ör: Osmanlı Tarihi" autoFocus onKeyDown={e=>e.key==='Enter'&&addSubcategory(newSubOpen)}/>
             </div>
-            <div style={{textAlign:'center',marginTop:20}}>
-                <button className="btn btn-primary" style={{padding:'12px 32px'}} onClick={onBack}>🏠 Ana Menüye Dön</button>
-            </div>
+            <div className="mf"><button className="btn bg" onClick={()=>setNewSubOpen(null)}>İptal</button><button className="btn bp" onClick={()=>addSubcategory(newSubOpen)}>✓ Onayla</button></div>
+          </div>
         </div>
-    );
-}
+      )}
 
-function Login({ onLogin }) {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const handle = () => {
-        const u = USERS.find(u=>u.username===username&&u.password===password);
-        if(u)onLogin(u); else setError('Kullanıcı adı veya şifre hatalı.');
-    };
-    return (
-        <div className="login-wrap">
-            <div className="login-card">
-                <div className="login-logo-icon">📚</div>
-                <div className="login-title">Sınav Sistemi</div>
-                <div className="login-subtitle">Soru yönetimine giriş yapın</div>
-                <div className="form-group">
-                    <label className="form-label">Kullanıcı Adı</label>
-                    <input className={`form-input ${error?'err':''}`} value={username} onChange={e=>{setUsername(e.target.value);setError('');}} onKeyDown={e=>e.key==='Enter'&&handle()} placeholder="admin" />
-                </div>
-                <div className="form-group">
-                    <label className="form-label">Şifre</label>
-                    <input className={`form-input ${error?'err':''}`} type="password" value={password} onChange={e=>{setPassword(e.target.value);setError('');}} onKeyDown={e=>e.key==='Enter'&&handle()} placeholder="••••••••" />
-                </div>
-                {error&&<div className="error-msg">⚠ {error}</div>}
-                <button className="btn-login" onClick={handle}>Giriş Yap →</button>
-                <div className="login-hint">Demo: <strong>admin</strong> / <strong>admin123</strong></div>
-            </div>
-        </div>
-    );
-}
-
-function App() {
-    const [user, setUser] = useState(()=>gs('exam_user',null));
-    const [questions, setQuestions] = useState(()=>gs('exam_q',DEFAULT_QUESTIONS));
-    const [page, setPage] = useState('menu');
-    const [examQs, setExamQs] = useState([]);
-    const [examAnswers, setExamAnswers] = useState({});
-    const [toast, setToast] = useState(null);
-    const [showLogin, setShowLogin] = useState(false);
-
-    const showToast = (msg,type='info') => setToast({msg,type,key:Date.now()});
-    const login = (u) => { setUser(u); ss('exam_user',u); setShowLogin(false); if(page!=='questions')setPage('questions'); };
-    const logout = () => { setUser(null); ss('exam_user',null); setPage('menu'); };
-
-    if(showLogin) return <>
-        <Login onLogin={login} />
-        <button onClick={()=>setShowLogin(false)} style={{position:'fixed',top:20,left:20,background:'rgba(255,255,255,0.15)',border:'none',color:'white',padding:'8px 14px',borderRadius:8,cursor:'pointer',fontSize:13}}>← Geri</button>
-    </>;
-
-    if(page==='exam') return (
-        <div style={{background:'var(--gray-50)',minHeight:'100vh'}}>
-            <ExamPage examQs={examQs} onFinish={(a)=>{setExamAnswers(a);setPage('results');}} onExit={()=>setPage('menu')} />
-            {toast&&<Toast key={toast.key} msg={toast.msg} type={toast.type} onDone={()=>setToast(null)} />}
-        </div>
-    );
-    if(page==='results') return (
-        <div style={{background:'var(--gray-50)',minHeight:'100vh'}}>
-            <ResultsPage examQs={examQs} answers={examAnswers} onBack={()=>setPage('menu')} />
-            {toast&&<Toast key={toast.key} msg={toast.msg} type={toast.type} onDone={()=>setToast(null)} />}
-        </div>
-    );
-
-    return (
-        <div className="app-shell">
-            <div className="sidebar">
-                <div className="sidebar-header">
-                    <div className="sidebar-brand">
-                        <div className="sidebar-brand-icon">📚</div>
-                        <div><div className="sidebar-brand-text">Sınav Sistemi</div><div className="sidebar-brand-sub">v2.0</div></div>
+      <div className="cat-grid">
+        {catList.map(cat=>{
+          const subs=Object.keys(cats[cat].subs).sort();
+          const total=questions.filter(q=>q.category===cat).length;
+          return(
+            <div className="cat-card" key={cat}>
+              <div className="cat-head">
+                <div style={{flex:1}}>
+                  {renaming?.type==='cat'&&renaming.cat===cat?(
+                    <div style={{display:'flex',gap:5,alignItems:'center'}}>
+                      <input className="mfi" style={{padding:'4px 8px',fontSize:12,width:120}} value={renaming.val} autoFocus
+                        onChange={e=>setRenaming(r=>({...r,val:e.target.value}))}
+                        onKeyDown={e=>{if(e.key==='Enter')renameCat(cat,renaming.val);if(e.key==='Escape')setRenaming(null)}}/>
+                      <button className="btn btn-sm bs" onClick={()=>renameCat(cat,renaming.val)}>✓</button>
+                      <button className="btn btn-sm bg" onClick={()=>setRenaming(null)}>✕</button>
                     </div>
+                  ):(
+                    <><div className="cat-name">{cat}</div><div className="cat-count">{total} soru · {subs.length} alt kat.</div></>
+                  )}
                 </div>
-                <nav className="sidebar-nav">
-                    <div className="nav-section-label">Navigasyon</div>
-                    <button className={`nav-item ${page==='menu'?'active':''}`} onClick={()=>setPage('menu')}><span className="nav-item-icon">🏠</span>Sınav Başlat</button>
-                    {user && <button className={`nav-item ${page==='questions'?'active':''}`} onClick={()=>setPage('questions')}><span className="nav-item-icon">📋</span>Soru Yönetimi<span className="nav-badge">{questions.length}</span></button>}
-                    {!user && (
+                <div style={{display:'flex',gap:4,flexShrink:0}}>
+                  <button className="ib p" title="Yeniden Adlandır" onClick={()=>setRenaming({type:'cat',cat,val:cat})}>✏️</button>
+                  <button className="ib p" title="Birleştir" onClick={()=>{setMerging({type:'cat',from:cat});setMergeTarget('')}}>⊕</button>
+                  <button className="ib d" title="Sil" onClick={()=>deleteCat(cat)}>🗑</button>
+                </div>
+              </div>
+              <div className="cat-body">
+                {subs.map(sub=>{
+                  const cnt=cats[cat].subs[sub];
+                  return(
+                    <div className="sub-row" key={sub}>
+                      {renaming?.type==='sub'&&renaming.cat===cat&&renaming.sub===sub?(
+                        <div style={{display:'flex',gap:5,alignItems:'center',flex:1}}>
+                          <input className="mfi" style={{padding:'3px 7px',fontSize:11,flex:1}} value={renaming.val} autoFocus
+                            onChange={e=>setRenaming(r=>({...r,val:e.target.value}))}
+                            onKeyDown={e=>{if(e.key==='Enter')renameSub(cat,sub,renaming.val);if(e.key==='Escape')setRenaming(null)}}/>
+                          <button className="btn btn-sm bs" onClick={()=>renameSub(cat,sub,renaming.val)}>✓</button>
+                          <button className="btn btn-sm bg" onClick={()=>setRenaming(null)}>✕</button>
+                        </div>
+                      ):(
                         <>
-                            <div className="nav-section-label" style={{marginTop:12}}>Yönetim</div>
-                            <button className="nav-item" onClick={()=>setShowLogin(true)}><span className="nav-item-icon">🔐</span>Soru Yönetimi</button>
+                          <span className="sub-name">└ {sub}</span>
+                          <div style={{display:'flex',alignItems:'center',gap:6}}>
+                            <span className="sub-cnt">{cnt}</span>
+                            <div style={{display:'flex',gap:3}}>
+                              <button className="ib p" style={{padding:'2px 5px',fontSize:10}} onClick={()=>setRenaming({type:'sub',cat,sub,val:sub})}>✏️</button>
+                              <button className="ib p" style={{padding:'2px 5px',fontSize:10}} onClick={()=>{setMerging({type:'sub',from:sub,cat});setMergeTarget('')}}>⊕</button>
+                              <button className="ib d" style={{padding:'2px 5px',fontSize:10}} onClick={()=>deleteSub(cat,sub)}>🗑</button>
+                            </div>
+                          </div>
                         </>
-                    )}
-                </nav>
-                <div className="sidebar-footer">
-                    {user ? (
-                        <div className="user-badge">
-                            <div className="user-avatar">👤</div>
-                            <div><div className="user-name">{user.name}</div><div className="user-role">{user.role}</div></div>
-                            <button className="btn-logout" title="Çıkış" onClick={logout}>⏏</button>
-                        </div>
-                    ) : (
-                        <button className="nav-item" onClick={()=>setShowLogin(true)} style={{width:'100%',justifyContent:'center',background:'rgba(37,99,235,0.15)',color:'#93c5fd'}}>🔐 Giriş Yap</button>
-                    )}
-                </div>
+                      )}
+                    </div>
+                  );
+                })}
+                <button className="btn bg btn-sm" style={{width:'100%',marginTop:8,fontSize:11,justifyContent:'center'}} onClick={()=>{setNewSubOpen(cat);setNewSubName('')}}>+ Alt Kategori Ekle</button>
+              </div>
             </div>
-            <div className="main-content">
-                {page==='menu' && <ExamMenu questions={questions} onStart={qs=>{setExamQs(qs);setPage('exam');}} />}
-                {page==='questions' && user && (
-                    <>
-                        <div className="topbar">
-                            <div><div className="topbar-title">📋 Soru Yönetimi</div><div className="topbar-subtitle">{questions.length} soru · {user.name}</div></div>
-                        </div>
-                        <div className="page-body">
-                            <QuestionManager questions={questions} setQuestions={setQuestions} showToast={showToast} />
-                        </div>
-                    </>
-                )}
+          );
+        })}
+        {catList.length===0&&<div className="empty" style={{gridColumn:'1/-1'}}><div style={{fontSize:34,marginBottom:9}}>📂</div><div>Henüz kategori yok. Soru ekleyerek kategori oluşturun.</div></div>}
+      </div>
+
+      {merging&&(
+        <div className="ov" onClick={e=>e.target===e.currentTarget&&setMerging(null)}>
+          <div className="mo" style={{maxWidth:400}}>
+            <div className="mh"><span className="mt">⊕ Birleştir</span><button className="mc" onClick={()=>setMerging(null)}>✕</button></div>
+            <div className="mb">
+              <p style={{fontSize:13,color:'var(--g6)',marginBottom:13}}>{merging.type==='cat'?`"${merging.from}" kategorisini hangi kategoriyle birleştirmek istiyorsunuz?`:`"${merging.from}" alt kategorisini hangi alt kategoriyle birleştirmek istiyorsunuz?`}</p>
+              <div className="fl" style={{fontSize:11,fontWeight:700,color:'var(--g6)',textTransform:'uppercase',letterSpacing:'.04em',marginBottom:5}}>Hedef</div>
+              <select className="mfi" value={mergeTarget} onChange={e=>setMergeTarget(e.target.value)}>
+                <option value="">— Seçin —</option>
+                {merging.type==='cat'?Object.keys(cats).filter(c=>c!==merging.from).sort().map(c=><option key={c}>{c}</option>):Object.keys(cats[merging.cat]?.subs||{}).filter(s=>s!==merging.from).sort().map(s=><option key={s}>{s}</option>)}
+              </select>
             </div>
-            {toast&&<Toast key={toast.key} msg={toast.msg} type={toast.type} onDone={()=>setToast(null)} />}
+            <div className="mf"><button className="btn bg" onClick={()=>setMerging(null)}>İptal</button><button className="btn bw" style={{opacity:mergeTarget?1:.45}} onClick={()=>{if(!mergeTarget)return;merging.type==='cat'?mergeCats(merging.from,mergeTarget):mergeSubs(merging.cat,merging.from,mergeTarget)}}>⊕ Birleştir</button></div>
+          </div>
         </div>
-    );
+      )}
+    </div>
+  );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+/* ══════════════════════════════════════
+   SETTINGS
+══════════════════════════════════════ */
+function Settings({timerSecs,setTimerSecs,shuffleQ,setShuffleQ,shuffleOpts,setShuffleOpts,showToast}){
+  const [val,setVal]=useState(timerSecs);
+  const saveT=()=>{const n=parseInt(val);if(isNaN(n)||n<10||n>300){showToast('10-300 arasında girin','error');return;}setTimerSecs(n);ss('exam_timer',n);showToast('Süre güncellendi ✓','success')};
+  return(
+    <div>
+      <div className="topbar"><div><div className="tb-title">⚙️ Ayarlar</div><div className="tb-sub">Sınav parametreleri</div></div></div>
+      <div className="pg">
+        <div className="set-card">
+          <div style={{fontSize:13,fontWeight:700,color:'var(--g6)',marginBottom:12}}>⏱ Zamanlayıcı</div>
+          <div className="set-row">
+            <div><div className="set-lbl">Soru Başına Süre</div><div className="set-desc">Süre dolunca boş sayılır, sonraki soruya geçilir.</div></div>
+            <div className="set-ctrl"><input className="numinp mfi" type="number" min={10} max={300} value={val} onChange={e=>setVal(e.target.value)} onKeyDown={e=>e.key==='Enter'&&saveT()}/><span style={{fontSize:12,color:'var(--g5)'}}>sn</span><button className="btn bp btn-sm" onClick={saveT}>Kaydet</button></div>
+          </div>
+          <div className="set-row">
+            <div><div className="set-lbl">Hızlı Seçim</div></div>
+            <div className="set-ctrl">{[30,45,60,90,120].map(s=><button key={s} className={`btn btn-sm ${timerSecs===s?'bp':'bg'}`} onClick={()=>{setVal(s);setTimerSecs(s);ss('exam_timer',s);showToast(`Süre ${s}sn`,'success')}}>{s}sn</button>)}</div>
+          </div>
+        </div>
+        <div className="set-card">
+          <div style={{fontSize:13,fontWeight:700,color:'var(--g6)',marginBottom:12}}>🔀 Karıştırma</div>
+          <div className="set-row">
+            <div><div className="set-lbl">Soruları Karıştır</div><div className="set-desc">Her sınavda soru sırası rastgele olur.</div></div>
+            <button className={`btn btn-sm ${shuffleQ?'bp':'bg'}`} onClick={()=>{const v=!shuffleQ;setShuffleQ(v);ss('exam_shuffleQ',v);showToast(v?'Soru karıştırma açık':'Soru karıştırma kapalı','info')}}>{shuffleQ?'✓ Açık':'Kapalı'}</button>
+          </div>
+          <div className="set-row">
+            <div><div className="set-lbl">Şıkları Karıştır</div><div className="set-desc">Her soru için şıklar rastgele sıralanır.</div></div>
+            <button className={`btn btn-sm ${shuffleOpts?'bp':'bg'}`} onClick={()=>{const v=!shuffleOpts;setShuffleOpts(v);ss('exam_shuffleOpts',v);showToast(v?'Şık karıştırma açık':'Şık karıştırma kapalı','info')}}>{shuffleOpts?'✓ Açık':'Kapalı'}</button>
+          </div>
+        </div>
+        <div className="set-card">
+          <div style={{fontSize:13,fontWeight:700,color:'var(--g6)',marginBottom:8}}>⌨️ Klavye Kısayolları</div>
+          <p style={{fontSize:13,color:'var(--g5)',lineHeight:1.7}}>Sınav sırasında <b>A / B / C / D</b> tuşlarıyla cevap seçebilirsiniz.</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════
+   HISTORY
+══════════════════════════════════════ */
+function History({history,setHistory,profileId}){
+  const mine=history.filter(h=>h.profileId===profileId);
+  const pct=s=>Math.round((s.correct/s.total)*100);
+  if(!mine.length)return(
+    <div>
+      <div className="topbar"><div><div className="tb-title">📊 Sınav Geçmişi</div><div className="tb-sub">Kişisel istatistikler</div></div></div>
+      <div className="pg"><div className="empty"><div style={{fontSize:36,marginBottom:9}}>📭</div><div>Henüz tamamlanan sınav yok.</div></div></div>
+    </div>
+  );
+  const clear=()=>{if(confirm('Bu profile ait geçmiş silinsin mi?')){const n=history.filter(h=>h.profileId!==profileId);setHistory(n);ss('exam_hist',n)}};
+  const avgPct=Math.round(mine.reduce((a,s)=>a+pct(s),0)/mine.length);
+  const totalCorrect=mine.reduce((a,s)=>a+s.correct,0);
+  const totalQ=mine.reduce((a,s)=>a+s.total,0);
+  return(
+    <div>
+      <div className="topbar"><div><div className="tb-title">📊 Sınav Geçmişi</div><div className="tb-sub">{mine.length} sınav tamamlandı</div></div><button className="btn bd btn-sm" style={{marginLeft:'auto'}} onClick={clear}>🗑 Temizle</button></div>
+      <div className="pg">
+        <div className="pstat-grid">
+          <div className="pstat"><div className="pstat-num" style={{color:'var(--P)'}}>{mine.length}</div><div className="pstat-lbl">Toplam Sınav</div></div>
+          <div className="pstat"><div className="pstat-num" style={{color:'var(--S)'}}>{totalCorrect}</div><div className="pstat-lbl">Toplam Doğru</div></div>
+          <div className="pstat"><div className="pstat-num" style={{color:'var(--W)'}}>{totalQ}</div><div className="pstat-lbl">Toplam Soru</div></div>
+          <div className="pstat"><div className="pstat-num" style={{color:avgPct>=70?'var(--S)':avgPct>=50?'var(--W)':'var(--D)'}}>{avgPct}%</div><div className="pstat-lbl">Ortalama Başarı</div></div>
+        </div>
+        <div className="tc">
+          {mine.slice().reverse().map((s,i)=>(
+            <div className="hist-row" key={i}>
+              <div className="hist-date">{fmtDate(s.date)}</div>
+              <div className="hist-cat">
+                {s.category&&<span className="badge b-blue" style={{marginRight:5}}>{s.category}</span>}
+                {s.difficulty&&<span className={`badge ${diffB(s.difficulty)}`} style={{marginRight:5}}>{s.difficulty}</span>}
+                <span style={{fontSize:11,color:'var(--g5)'}}>{s.total} soru</span>
+              </div>
+              <div style={{display:'flex',gap:12,alignItems:'center',flexWrap:'wrap'}}>
+                <span style={{fontSize:12,color:'var(--S)',fontWeight:600}}>✓ {s.correct}</span>
+                <span style={{fontSize:12,color:'var(--D)',fontWeight:600}}>✗ {s.wrong}</span>
+                <span style={{fontSize:12,color:'var(--W)',fontWeight:600}}>— {s.empty}</span>
+              </div>
+              <div className="hist-pct" style={{color:pct(s)>=70?'var(--S)':pct(s)>=50?'var(--W)':'var(--D)'}}>{pct(s)}%</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════
+   EXAM MENU
+══════════════════════════════════════ */
+function ExamMenu({questions,onStart,timerSecs}){
+  const [cat,setCat]=useState(null);const [sub,setSub]=useState(null);const [diff,setDiff]=useState(null);const [count,setCount]=useState(null);
+  const cats=[...new Set(questions.map(q=>q.category))];
+  const subs=cat?[...new Set(questions.filter(q=>q.category===cat).map(q=>q.subcategory))]:[];
+  const diffs=[...new Set(questions.map(q=>q.difficulty))];
+  const filtered=questions.filter(q=>(!cat||q.category===cat)&&(!sub||q.subcategory===sub)&&(!diff||q.difficulty===diff));
+  const canStart=count&&filtered.length>0;
+  return(
+    <div className="menu-wrap">
+      <div className="topbar"><div><div className="tb-title">🚀 Sınava Başla</div><div className="tb-sub">{filtered.length} uygun soru · ⏱ {timerSecs}sn/soru</div></div></div>
+      <div className="pg">
+        <div className="sec"><div className="sec-title">📂 1. Kategori <span style={{color:'var(--g4)',fontWeight:400,fontSize:12}}>(opsiyonel)</span></div><div className="chips">{cats.map(c=><button key={c} className={`chip${cat===c?' active':''}`} onClick={()=>{setCat(cat===c?null:c);setSub(null)}}>{c}</button>)}</div></div>
+        {cat&&subs.length>1&&<div className="sec"><div className="sec-title">📁 2. Alt Kategori <span style={{color:'var(--g4)',fontWeight:400,fontSize:12}}>(opsiyonel)</span></div><div className="chips">{subs.map(s=><button key={s} className={`chip${sub===s?' active':''}`} onClick={()=>setSub(sub===s?null:s)}>{s}</button>)}</div></div>}
+        <div className="sec"><div className="sec-title">🎯 3. Zorluk <span style={{color:'var(--g4)',fontWeight:400,fontSize:12}}>(opsiyonel)</span></div><div className="chips">{diffs.map(d=><button key={d} className={`chip${diff===d?' active':''}`} onClick={()=>setDiff(diff===d?null:d)}>{d}</button>)}</div></div>
+        <div className="sec">
+          <div className="sec-title">🔢 4. Soru Sayısı *</div>
+          <div className="chips">
+            {[10,20,50,100].filter(n=>filtered.length>=n).map(n=><button key={n} className={`chip${count===n?' active':''}`} onClick={()=>setCount(count===n?null:n)}>{n}</button>)}
+            <button className={`chip${count==='all'?' active':''}`} onClick={()=>setCount(count==='all'?null:'all')}>Tümü ({filtered.length})</button>
+          </div>
+        </div>
+        <div style={{textAlign:'center'}}><button className="btn bp" style={{padding:'12px 36px',fontSize:14,opacity:canStart?1:.45}} onClick={()=>{if(!canStart)return;let qs=[...filtered];if(count!=='all')qs=qs.slice(0,count);onStart(qs,{cat,diff})}}>🚀 Sınavı Başlat</button></div>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════
+   EXAM PAGE
+══════════════════════════════════════ */
+function ExamPage({examQs,timerSecs,shuffleOpts,onFinish,onExit}){
+  const [cur,setCur]=useState(0);
+  const [answers,setAnswers]=useState({});
+  const [revealed,setRevealed]=useState(false);
+  const [feedback,setFeedback]=useState(null);
+  const [timerActive,setTimerActive]=useState(true); // direkt başla
+  const [showFinCfm,setShowFinCfm]=useState(false);
+  const pendRef=useRef();
+
+  const shuffledOpts=useMemo(()=>{
+    if(!shuffleOpts)return examQs.map(q=>({opts:q.options,map:[0,1,2,3]}));
+    return examQs.map(q=>{const idx=[0,1,2,3];const s=shuffle(idx);return{opts:s.map(i=>q.options[i]),map:s}});
+  },[examQs,shuffleOpts]);
+
+  const q=examQs[cur];
+  const{opts,map}=shuffledOpts[cur];
+  const correctMapped=map.indexOf(q.correctAnswer);
+
+  const doFinish=useCallback((ans)=>{
+    clearTimeout(pendRef.current);
+    setTimerActive(false);
+    const mapped={};
+    Object.keys(ans).forEach(ci=>{
+      const qi=parseInt(ci);const a=ans[qi];
+      if(a===null||a===undefined)mapped[qi]=a;
+      else mapped[qi]=shuffledOpts[qi].map[a];
+    });
+    onFinish(mapped);
+  },[shuffledOpts,onFinish]);
+
+  const goNext=useCallback((ansSnap)=>{
+    setRevealed(false);setFeedback(null);setTimerActive(false);
+    clearTimeout(pendRef.current);
+    if(cur<examQs.length-1){setCur(c=>c+1);setTimeout(()=>setTimerActive(true),50);}
+    else doFinish(ansSnap||answers);
+  },[cur,examQs.length,answers,doFinish]);
+
+  const handleExpire=useCallback(()=>{
+    setTimerActive(false);setRevealed(true);setFeedback('tmt');
+    setAnswers(p=>{const n={...p};if(n[cur]===undefined)n[cur]=null;return n;});
+    pendRef.current=setTimeout(()=>goNext(),2200);
+  },[cur,goNext]);
+
+  const{rem,reset,stop}=useTimer(timerSecs,handleExpire,timerActive);
+
+  // Soru değişince timer anında başlar
+  useEffect(()=>{
+    setRevealed(false);setFeedback(null);
+    reset(timerSecs);
+    setTimerActive(true);
+    return()=>clearTimeout(pendRef.current);
+  },[cur]);
+
+  const handleAns=(i)=>{
+    if(revealed||showFinCfm)return;
+    stop();setTimerActive(false);
+    const newA={...answers,[cur]:i};setAnswers(newA);setRevealed(true);
+    const ok=i===correctMapped;setFeedback(ok?'cor':'wrg');
+    pendRef.current=setTimeout(()=>goNext(newA),ok?1000:2200);
+  };
+
+  useEffect(()=>{
+    const fn=e=>{
+      if(revealed||showFinCfm)return;
+      if(e.key==='a'||e.key==='A')handleAns(0);
+      else if(e.key==='b'||e.key==='B')handleAns(1);
+      else if(e.key==='c'||e.key==='C')handleAns(2);
+      else if(e.key==='d'||e.key==='D')handleAns(3);
+    };
+    window.addEventListener('keydown',fn);
+    return()=>window.removeEventListener('keydown',fn);
+  },[revealed,cur,showFinCfm]);
+
+  const btnCls=(i)=>{
+    if(!revealed)return answers[cur]===i?'sel':'';
+    if(i===correctMapped)return'cor rev';
+    if(answers[cur]===i&&i!==correctMapped)return'wrg rev';
+    return'rev';
+  };
+  const timerCls=rem<=5?'danger':rem<=10?'warn':'';
+  const answered=Object.keys(answers).length;
+
+  return(
+    <div className="exam-wrap">
+      <div className="exam-top">
+        <div className="prog-sec">
+          <div className="prog-info">
+            <span>Soru {cur+1} / {examQs.length}</span>
+            <span style={{color:'var(--S)'}}>✓ {answered}</span>
+          </div>
+          <div className="prog-bar"><div className="prog-fill" style={{width:`${((cur+1)/examQs.length)*100}%`}}/></div>
+        </div>
+        <div className="timer-wrap">
+          <TimerRing rem={rem} total={timerSecs}/>
+          <div className={`timer-num ${timerCls}`}>{rem}s</div>
+        </div>
+        <div style={{display:'flex',gap:7}}>
+          <button className="btn bw btn-sm" onClick={()=>setShowFinCfm(true)}>⏹ Bitir</button>
+          <button className="btn bg btn-sm" onClick={()=>{if(confirm('Sınavdan çıkmak istiyor musunuz?')){clearTimeout(pendRef.current);onExit()}}}>✕</button>
+        </div>
+      </div>
+      <div className="exam-card">
+        <div className="q-num">Soru {cur+1} · {q.category} · {q.difficulty}</div>
+        <div className="q-txt">{q.text}</div>
+        {feedback&&(
+          <div className={`fbk ${feedback}`}>
+            {feedback==='cor'&&<><span>✅</span>Doğru! Bir sonraki soruya geçiliyor…</>}
+            {feedback==='wrg'&&<><span>❌</span>Yanlış! Doğru: <strong>{String.fromCharCode(65+map.indexOf(q.correctAnswer))}) {q.options[q.correctAnswer]}</strong></>}
+            {feedback==='tmt'&&<><span>⏱</span>Süre doldu! Doğru: <strong>{String.fromCharCode(65+map.indexOf(q.correctAnswer))}) {q.options[q.correctAnswer]}</strong></>}
+          </div>
+        )}
+        <div className="ans-list">
+          {opts.map((opt,i)=>(
+            <button key={i} className={`ans ${btnCls(i)}`} onClick={()=>handleAns(i)}>
+              <div className="ans-ltr">{String.fromCharCode(65+i)}</div>
+              <span style={{flex:1}}>{opt}</span>
+              {revealed&&i===correctMapped&&<span className="ans-ico">✅</span>}
+              {revealed&&answers[cur]===i&&i!==correctMapped&&<span className="ans-ico">❌</span>}
+            </button>
+          ))}
+        </div>
+        <div className="kbd"><span className="kk"><kbd className="kkey">A</kbd><kbd className="kkey">B</kbd><kbd className="kkey">C</kbd><kbd className="kkey">D</kbd> ile cevapla</span></div>
+      </div>
+      {showFinCfm&&(
+        <div className="ov">
+          <div className="mo" style={{maxWidth:400}}>
+            <div className="mh"><span className="mt">⏹ Sınavı Bitir</span><button className="mc" onClick={()=>setShowFinCfm(false)}>✕</button></div>
+            <div className="mb">
+              <p style={{color:'var(--g7)',lineHeight:1.7,fontSize:14}}><strong>{answered}</strong> / {examQs.length} soru cevaplandı.<br/><span style={{color:'var(--W)'}}>{examQs.length-answered} soru boş kalacak.</span><br/><br/>Sonuçlarınızı şimdi görmek istiyor musunuz?</p>
+            </div>
+            <div className="mf">
+              <button className="btn bg" onClick={()=>setShowFinCfm(false)}>Devam Et</button>
+              <button className="btn bw" onClick={()=>{setShowFinCfm(false);clearTimeout(pendRef.current);doFinish(answers)}}>⏹ Evet, Bitir</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════
+   RESULTS
+══════════════════════════════════════ */
+function Results({examQs,answers,meta,profileId,onBack,addHistory}){
+  useEffect(()=>{
+    let correct=0,wrong=0,empty=0;
+    examQs.forEach((q,i)=>{const a=answers[i];if(a===null||a===undefined)empty++;else if(a===q.correctAnswer)correct++;else wrong++;});
+    addHistory({date:Date.now(),correct,wrong,empty,total:examQs.length,category:meta?.cat,difficulty:meta?.diff,profileId});
+  },[]);
+  let correct=0,wrongList=[],emptyList=[];
+  examQs.forEach((q,i)=>{const a=answers[i];if(a===null||a===undefined)emptyList.push(q);else if(a===q.correctAnswer)correct++;else wrongList.push({q,user:q.options[a],correct:q.options[q.correctAnswer]})});
+  const pct=Math.round((correct/examQs.length)*100);
+  return(
+    <div className="res-wrap">
+      <div style={{textAlign:'center',paddingTop:12}}>
+        <h1 style={{fontSize:30,fontWeight:800,color:'var(--g9)'}}>✓ Sınav Tamamlandı</h1>
+        <div className="score-grid">
+          <div className="sbox"><div className="snum" style={{color:'var(--S)'}}>{correct}</div><div className="slbl">Doğru</div></div>
+          <div className="sbox"><div className="snum" style={{color:'var(--D)'}}>{wrongList.length}</div><div className="slbl">Yanlış</div></div>
+          <div className="sbox"><div className="snum" style={{color:'var(--W)'}}>{emptyList.length}</div><div className="slbl">Boş</div></div>
+          <div className="sbox"><div className="snum" style={{color:'var(--P)'}}>{pct}%</div><div className="slbl">Başarı</div></div>
+        </div>
+      </div>
+      {wrongList.length>0&&<div className="sec" style={{marginTop:18}}><div className="sec-title">❌ Yanlış Cevaplar</div>{wrongList.map((w,i)=><div key={i} style={{padding:12,background:'var(--DL)',borderLeft:'4px solid var(--D)',borderRadius:8,marginBottom:9}}><p style={{fontWeight:600,marginBottom:7,fontSize:14}}>{w.q.text}</p><p style={{fontSize:12,color:'var(--D)'}}>Cevabınız: {w.user}</p><p style={{fontSize:12,color:'var(--S)',fontWeight:600}}>Doğru: {w.correct}</p>{w.q.explanation&&<p style={{fontSize:11,marginTop:6,color:'var(--g6)',background:'rgba(0,0,0,.04)',padding:'6px 9px',borderRadius:5}}>💡 {w.q.explanation}</p>}</div>)}</div>}
+      {emptyList.length>0&&<div className="sec"><div className="sec-title">⏱ Boş Bırakılan</div>{emptyList.map((q,i)=><div key={i} style={{padding:'9px 13px',background:'var(--WL)',borderLeft:'4px solid var(--W)',borderRadius:7,marginBottom:7,fontSize:12}}><span style={{fontWeight:600}}>{q.text}</span><span style={{marginLeft:8,color:'var(--g6)'}}>Doğru: {q.options[q.correctAnswer]}</span></div>)}</div>}
+      <div style={{textAlign:'center',marginTop:18}}><button className="btn bp" style={{padding:'11px 30px'}} onClick={onBack}>🏠 Ana Menüye Dön</button></div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════
+   PROFILE HOME SCREEN
+══════════════════════════════════════ */
+function ProfileHome({profiles,setProfiles,onSelectProfile,onAdminLogin}){
+  const [adding,setAdding]=useState(false);
+  const [name,setName]=useState('');
+  const [color,setColor]=useState(AVATAR_COLORS[0]);
+  const [emoji,setEmoji]=useState(AVATAR_EMOJIS[0]);
+
+  const createProfile=()=>{
+    if(!name.trim())return;
+    const p={id:uid(),name:name.trim(),color,emoji,createdAt:Date.now()};
+    const next=[...profiles,p];setProfiles(next);ss('exam_profiles',next);
+    setAdding(false);setName('');
+    onSelectProfile(p);
+  };
+
+  const deleteProfile=(id,e)=>{
+    e.stopPropagation();
+    if(!confirm('Bu profil ve istatistikleri silinecek. Emin misiniz?'))return;
+    const next=profiles.filter(p=>p.id!==id);setProfiles(next);ss('exam_profiles',next);
+  };
+
+  return(
+    <div className="home">
+      <div className="home-logo">📚</div>
+      <div className="home-title">Sınav Sistemi</div>
+      <div className="home-sub">Profilinizi seçin veya yeni bir profil oluşturun</div>
+      <div className="profile-grid">
+        {profiles.map(p=>(
+          <div className="prof-card" key={p.id} onClick={()=>onSelectProfile(p)}>
+            <button className="prof-del" onClick={e=>deleteProfile(p.id,e)}>✕</button>
+            <div className="prof-avatar" style={{background:p.color}}>{p.emoji}</div>
+            <div className="prof-name">{p.name}</div>
+          </div>
+        ))}
+        {!adding&&(
+          <div className="prof-add" onClick={()=>setAdding(true)}>
+            <div className="prof-add-ico">➕</div>
+            <div className="prof-add-lbl">Yeni Profil</div>
+          </div>
+        )}
+      </div>
+      {adding&&(
+        <div className="new-prof-form">
+          <h3>Yeni Profil Oluştur</h3>
+          <input className="npi" value={name} onChange={e=>setName(e.target.value)} placeholder="Adınız..." autoFocus onKeyDown={e=>e.key==='Enter'&&createProfile()}/>
+          <div style={{fontSize:11,color:'rgba(255,255,255,.5)',marginBottom:6,textTransform:'uppercase',letterSpacing:'.04em'}}>Renk Seç</div>
+          <div className="avatar-pick" style={{marginBottom:12}}>
+            {AVATAR_COLORS.map(c=>(
+              <div key={c} className={`av-opt${color===c?' sel':''}`} style={{background:c}} onClick={()=>setColor(c)}>•</div>
+            ))}
+          </div>
+          <div style={{fontSize:11,color:'rgba(255,255,255,.5)',marginBottom:6,textTransform:'uppercase',letterSpacing:'.04em'}}>İkon Seç</div>
+          <div className="avatar-pick">
+            {AVATAR_EMOJIS.map(em=>(
+              <div key={em} className={`av-opt${emoji===em?' sel':''}`} style={{background:'rgba(255,255,255,.1)'}} onClick={()=>setEmoji(em)}>{em}</div>
+            ))}
+          </div>
+          <div style={{display:'flex',gap:9,marginTop:8}}>
+            <button className="btn bg" style={{flex:1}} onClick={()=>setAdding(false)}>İptal</button>
+            <button className="btn bp" style={{flex:2,opacity:name.trim()?1:.45}} onClick={createProfile}>✓ Oluştur</button>
+          </div>
+        </div>
+      )}
+      <button className="home-admin-btn" onClick={onAdminLogin}>⚙️ Yönetici Girişi</button>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════
+   ADMIN LOGIN
+══════════════════════════════════════ */
+function AdminLogin({onLogin,onBack}){
+  const [u,setU]=useState('');const [p,setP]=useState('');const [err,setErr]=useState('');
+  const go=()=>{const r=chkAuth(u.trim(),p);if(r)onLogin(r);else setErr('Kullanıcı adı veya şifre hatalı.')};
+  return(
+    <div className="login-wrap">
+      <div className="login-card">
+        <div className="login-logo">🔐</div>
+        <div className="login-title">Yönetici Girişi</div>
+        <div className="login-sub">Soru bankasını yönetmek için giriş yapın</div>
+        <div className="fg"><label className="fl">Kullanıcı Adı</label><input className={`fi${err?' err':''}`} value={u} onChange={e=>{setU(e.target.value);setErr('')}} onKeyDown={e=>e.key==='Enter'&&go()} autoFocus/></div>
+        <div className="fg"><label className="fl">Şifre</label><input className={`fi${err?' err':''}`} type="password" value={p} onChange={e=>{setP(e.target.value);setErr('')}} onKeyDown={e=>e.key==='Enter'&&go()}/></div>
+        {err&&<div className="err-msg">⚠ {err}</div>}
+        <button className="btn-login" onClick={go}>Giriş Yap →</button>
+        <button onClick={onBack} style={{width:'100%',marginTop:12,background:'none',border:'none',color:'var(--g5)',cursor:'pointer',fontSize:13,fontFamily:'inherit'}}>← Geri</button>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════
+   APP
+══════════════════════════════════════ */
+function App(){
+  // Profiles
+  const [profiles,setProfiles]=useState(()=>gs('exam_profiles',[]));
+  const [activeProfile,setActiveProfile]=useState(null);
+  // Admin
+  const [adminUser,setAdminUser]=useState(()=>gs('exam_admin_user',null));
+  const [showAdminLogin,setShowAdminLogin]=useState(false);
+  // Data
+  const [questions,setQuestions]=useState(()=>gs('exam_q',DQ));
+  const [timerSecs,setTimerSecs]=useState(()=>gs('exam_timer',DTIMER));
+  const [shuffleQ,setShuffleQ]=useState(()=>gs('exam_shuffleQ',false));
+  const [shuffleOpts,setShuffleOpts]=useState(()=>gs('exam_shuffleOpts',false));
+  const [history,setHistory]=useState(()=>gs('exam_hist',[]));
+  // UI
+  const [page,setPage]=useState('menu');
+  const [examQs,setExamQs]=useState([]);
+  const [examMeta,setExamMeta]=useState(null);
+  const [examAnswers,setExamAnswers]=useState({});
+  const [toast,setToast]=useState(null);
+  const [sidebarOpen,setSidebarOpen]=useState(false);
+
+  const showToast=(msg,type='info')=>setToast({msg,type,key:Date.now()});
+  const addHistory=(rec)=>{setHistory(h=>{const n=[...h,rec];ss('exam_hist',n);return n})};
+
+  const startExam=(qs,meta)=>{
+    const final=shuffleQ?shuffle(qs):qs;
+    setExamQs(final);setExamMeta(meta);setPage('exam');
+  };
+
+  const logout=()=>{setAdminUser(null);ss('exam_admin_user',null);setPage('menu')};
+
+  const closeSidebar=()=>setSidebarOpen(false);
+
+  // If no active profile and no admin → show profile home
+  if(!activeProfile&&!adminUser){
+    if(showAdminLogin)return<AdminLogin onLogin={u=>{setAdminUser(u);ss('exam_admin_user',u);setShowAdminLogin(false)}} onBack={()=>setShowAdminLogin(false)}/>;
+    return<ProfileHome profiles={profiles} setProfiles={setProfiles} onSelectProfile={p=>{setActiveProfile(p);setPage('menu')}} onAdminLogin={()=>setShowAdminLogin(true)}/>;
+  }
+
+  if(page==='exam')return(
+    <div style={{background:'var(--g0)',minHeight:'100vh'}}>
+      <ExamPage examQs={examQs} timerSecs={timerSecs} shuffleOpts={shuffleOpts} onFinish={a=>{setExamAnswers(a);setPage('results')}} onExit={()=>setPage('menu')}/>
+      {toast&&<Toast key={toast.key} msg={toast.msg} type={toast.type} onDone={()=>setToast(null)}/>}
+    </div>
+  );
+  if(page==='results')return(
+    <div style={{background:'var(--g0)',minHeight:'100vh'}}>
+      <Results examQs={examQs} answers={examAnswers} meta={examMeta} profileId={activeProfile?.id||'admin'} onBack={()=>setPage('menu')} addHistory={addHistory}/>
+      {toast&&<Toast key={toast.key} msg={toast.msg} type={toast.type} onDone={()=>setToast(null)}/>}
+    </div>
+  );
+
+  const isAdmin=!!adminUser;
+
+  return(
+    <div className="shell">
+      {/* Mobile overlay */}
+      <div className={`mob-overlay${sidebarOpen?' open':''}`} onClick={closeSidebar}/>
+
+      <div className={`sidebar${sidebarOpen?' open':''}`}>
+        <div className="sb-head">
+          <div className="sb-brand"><div className="sb-ico">📚</div><div><div className="sb-name">Sınav Sistemi</div><div className="sb-ver">v5.0</div></div></div>
+        </div>
+        <nav className="sb-nav">
+          <div className="nav-sec">Sınav</div>
+          <button className={`ni${page==='menu'?' active':''}`} onClick={()=>{setPage('menu');closeSidebar()}}><span className="ni-ico">🏠</span>Sınav Başlat</button>
+          {activeProfile&&<button className={`ni${page==='history'?' active':''}`} onClick={()=>{setPage('history');closeSidebar()}}><span className="ni-ico">📊</span>Geçmişim<span className="nb nb-p">{history.filter(h=>h.profileId===activeProfile.id).length}</span></button>}
+
+          {isAdmin&&(
+            <>
+              <div className="nav-sec admin-only" style={{marginTop:8}}>Yönetim</div>
+              <button className={`ni admin-only${page==='questions'?' active':''}`} onClick={()=>{setPage('questions');closeSidebar()}}><span className="ni-ico">📋</span>Soru Yönetimi<span className="nb nb-p">{questions.length}</span></button>
+              <button className={`ni admin-only${page==='categories'?' active':''}`} onClick={()=>{setPage('categories');closeSidebar()}}><span className="ni-ico">📂</span>Kategori Yönetimi</button>
+              <button className={`ni admin-only${page==='settings'?' active':''}`} onClick={()=>{setPage('settings');closeSidebar()}}><span className="ni-ico">⚙️</span>Ayarlar<span className="nb nb-g">{timerSecs}s</span></button>
+            </>
+          )}
+          {!isAdmin&&(
+            <>
+              <div className="nav-sec admin-only" style={{marginTop:8}}>Yönetim</div>
+              <button className="ni admin-only" onClick={()=>setShowAdminLogin(true)}><span className="ni-ico">🔐</span>Yönetici Girişi</button>
+            </>
+          )}
+        </nav>
+        <div className="sb-foot">
+          {activeProfile&&(
+            <div className="prof-row">
+              <div className="prof-av-sm" style={{background:activeProfile.color}}>{activeProfile.emoji}</div>
+              <div style={{flex:1,overflow:'hidden'}}><div className="prof-n">{activeProfile.name}</div><div className="prof-r">Öğrenci</div></div>
+              <button className="btn-lo" title="Profil değiştir" onClick={()=>{setActiveProfile(null);setPage('menu')}}>⇄</button>
+            </div>
+          )}
+          {isAdmin&&(
+            <div className="prof-row" style={{marginTop:activeProfile?6:0}}>
+              <div className="prof-av-sm" style={{background:'var(--V)'}}>🔐</div>
+              <div style={{flex:1,overflow:'hidden'}}><div className="prof-n">{adminUser.name}</div><div className="prof-r">{adminUser.role}</div></div>
+              <button className="btn-lo" title="Admin çıkış" onClick={logout}>⏏</button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="main">
+        {/* Mobile topbar */}
+        <div className="mob-bar">
+          <button className="mob-toggle" onClick={()=>setSidebarOpen(o=>!o)}>☰</button>
+          <div style={{color:'white',fontSize:14,fontWeight:600}}>📚 Sınav Sistemi</div>
+          <div style={{width:36}}/>
+        </div>
+
+        {page==='menu'&&<ExamMenu questions={questions} onStart={startExam} timerSecs={timerSecs}/>}
+        {page==='history'&&activeProfile&&<History history={history} setHistory={setHistory} profileId={activeProfile.id}/>}
+        {page==='questions'&&isAdmin&&(
+          <><div className="topbar"><div><div className="tb-title">📋 Soru Yönetimi</div><div className="tb-sub">{questions.length} soru</div></div></div><div className="pg"><QManager questions={questions} setQuestions={setQuestions} showToast={showToast}/></div></>
+        )}
+        {page==='categories'&&isAdmin&&(
+          <><div className="topbar"><div><div className="tb-title">📂 Kategori Yönetimi</div><div className="tb-sub">{[...new Set(questions.map(q=>q.category))].length} kategori</div></div></div><div className="pg"><CatManager questions={questions} setQuestions={setQuestions} showToast={showToast}/></div></>
+        )}
+        {page==='settings'&&isAdmin&&<Settings timerSecs={timerSecs} setTimerSecs={setTimerSecs} shuffleQ={shuffleQ} setShuffleQ={setShuffleQ} shuffleOpts={shuffleOpts} setShuffleOpts={setShuffleOpts} showToast={showToast}/>}
+      </div>
+
+      {showAdminLogin&&<AdminLogin onLogin={u=>{setAdminUser(u);ss('exam_admin_user',u);setShowAdminLogin(false)}} onBack={()=>setShowAdminLogin(false)}/>}
+      {toast&&<Toast key={toast.key} msg={toast.msg} type={toast.type} onDone={()=>setToast(null)}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 </script>
 </body>
 </html>
